@@ -34,7 +34,44 @@ E8 xx xx xx xx     call  FUN_140eda6xx
 新 SHA-256	71697A61F2A18FCD414688A0CDB4EB48394FFF1EDA078D36B5AD215C2285B2DF
 签名状态	HashMismatch（符合预期，见下方风险）
 
-四、风险提示
+四、镜头相关性与「正确的 KYUSHU」（2026-10-23 修正）
+- 用同一张 DNG 只改镜头标识（`LensType` 0x003f），渲染逐像素一致：镜头不参与调色，只决定菜单资格。
+- 同一张 IMGP1157.DNG 只改 `ImageTone`（12 / 15 / 31 / 8）会得到不同的雷达图和画面，
+  说明「菜单里的 KYUSHU」与「相机记录在文件里的那一套」不是同一个参数状态。
+- 维护者确认：`sample/HDFA43_KYUSHU_IMGP1157.png` 的斜四边形才是正确的 KYUSHU；
+  该状态目前还没在确定性操作下复现（菜单是自绘列表，滚动位置会影响点选）。
+详见 `docs/PDCU-KYUSHU-镜头无关性验证.md`。
+
+五、供体移植工具（近似方案）
+PDCU 的 KYUSHU 依赖相机写进 DNG 私有块里的那套参数；非机内 KYUSHU 的文件没有它。
+可以用一张机内 KYUSHU 的 DNG 当“供体”，把私有块前 15,031 字节（`0x3AB7`）写进目标：
+
+```powershell
+python tools/kyushu_transplant.py --donor sample\IMGP1157.DNG --target sample\IMGP1194.DNG --out out.dng
+```
+
+- 输出会在 PDCU 里显示为 KYUSHU（雷达图斜四边形）；
+- **供体与目标必须是同一机型**（参数是机型相关的，跨机型不做）；
+- K-3 Mark III：固定复制 15,031 字节（已实测）；
+- 其他机型（K-1/K-1 II/KF 等）：按 `tag 0x021f 偏移 + 0x733` 估算长度，
+  需要加 `--allow-untested`，并在 PDCU 里检查结果；必要时用 `--len` 指定实测长度；
+- 会自动校验 K-3 III 供体标记（`0x0014=21`、`0x0016=50`、`0x0200/0x024c=1024`）；
+- **近似**：会带入供体的影调/白平衡，可能偏暖；选光线接近的供体，输出后在 PDCU 里再校正。
+- 不改输入文件。
+
+六、`pentax_seasons.exe` 是什么（2026-10-23 分析）
+网上流传的 `tools/pentax_seasons.exe` 不是“让 PDCU 认出 KYUSHU”的工具，实测结论：
+
+- 它是 PyInstaller 打包的 Python 3.11 / tkinter 小程序（源码 `\\Mac\BAK\pentax_f\pentax_seasons.py`）；
+- 只往 DNG 的 Pentax 私有块写两处固定字节：tag `0x021A` 表 +26 的 1 个字节（`0x21`），
+  以及表中 `1A 00 02 00` 之后 26 字节处的 156 字节硬编码表；
+- 那个标记只在 **1024 字节窗口**里找：645Z 一类布局命中（+704），K-3 III 在 +1454，
+  所以对 K-3 III 它**只写 1 个字节就报错**（`IMGP1194.DNG` 实测：0x2B64 `02→21`，无其它变化）；
+- 它不改能力标记（`0x0014`/`0x0016`），645Z 上 patch 前后 PDCU 渲染逐像素相同。
+- 完整分析见 `docs/PDCU-pentax_seasons工具分析.md`；等价的命令行复现在
+  `tools/pentax_seasons.py`（`analyze` 解释判断过程，`convert` 与 exe 输出 0 字节差异）。
+
+七、风险提示
 数字签名已失效，Windows SmartScreen/杀软可能提示“未知发布者”或拦截；这是修改官方二进制的必然结果。
 不要在校验签名的环境（如某些企业策略）里使用。
 功能层面已验证正常；但这是绕过相机端“机身+镜头+SE 固件”授权逻辑，仅建议个人研究/兼容用途。
