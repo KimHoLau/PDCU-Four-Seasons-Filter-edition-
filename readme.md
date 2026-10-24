@@ -75,3 +75,5 @@ python tools/kyushu_transplant.py --donor sample\IMGP1157.DNG --target sample\IM
 数字签名已失效，Windows SmartScreen/杀软可能提示“未知发布者”或拦截；这是修改官方二进制的必然结果。
 不要在校验签名的环境（如某些企业策略）里使用。
 功能层面已验证正常；但这是绕过相机端“机身+镜头+SE 固件”授权逻辑，仅建议个人研究/兼容用途。
+
+
