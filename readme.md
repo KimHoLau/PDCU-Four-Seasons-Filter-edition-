@@ -1,6 +1,6 @@
 # PDCU 四季参数补齐工具（GUI 版）v1.5
 
-![GUI](PDCU-四季参数补齐工具-GUI.png)
+![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/PDCU-GUI.png)
 
 ## 运行
 
