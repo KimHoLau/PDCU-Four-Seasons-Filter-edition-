@@ -76,4 +76,22 @@ python tools/kyushu_transplant.py --donor sample\IMGP1157.DNG --target sample\IM
 不要在校验签名的环境（如某些企业策略）里使用。
 功能层面已验证正常；但这是绕过相机端“机身+镜头+SE 固件”授权逻辑，仅建议个人研究/兼容用途。
 
+八、工具兼容性更新（2026-10-26）
+- `tools/dng_season_params.py` 与 `dist/PDCU-Season-Params.exe` v1.3 已支持老固件 K-1
+  的带填充 `0x021A`：长度不能整除时按 `recordSize = 2 × (nParams + 1)` 识别，
+  尾部保留区忽略。
+- `0x021B` 后没有空位时，工具会把整个矩阵表迁移到私有块内安全空闲区
+  （优先紧接新 `0x021A` 表尾，避开 preview/其他 tag），并更新 offset/length。
+- 实测 `sample/IMGP0344.DNG`（K-1 v1.50）：0x021A 1146→860 B、28→32 条；
+  0x021B 382→454 B、21→25 个矩阵；raw 49,393,851 B 不变，文件大小不变。
+- 原版 PDCU 5.10.2.2（未改 EXE）直接打开补丁后的 `IMGP0344_all.dng`
+  即可列出并渲染四季；打开原始 `IMGP0344.DNG` 则不列出。
+- 645Z 试验（`sample/IMGP2674.DNG`）：结构上可以打补丁，PDCU 也会列出四项，
+  但 K-1 的四季记录/矩阵跨机型颜色不对（HARUBENI 几乎不变，另外三项变成高调/发白）。
+  GUI 默认拒绝跨机型；勾选“允许跨机型 donor（实验性）”后可以生成近似结果。
+  详见 `docs/PDCU-季节参数补齐工具.md` 第 8 节。
+- K-3（初代）试验（`sample/IMGP4929.DNG`）：同样可以打补丁，PDCU 四项都能显示，
+  画面也都有变化；效果比 645Z 更接近四季，但 KATEN/KYUSHU 色彩仍与 K-1 不同，
+  只能算近似。GUI 勾选“允许跨机型 donor（实验性）”后可用。详见同文档第 9 节。
+
 
