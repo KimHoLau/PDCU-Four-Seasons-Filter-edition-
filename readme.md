@@ -1,7 +1,8 @@
 # PDCU 四季参数补齐工具（GUI 版）v1.5
 
 ![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/PDCU-GUI.png)
-
+## K70->KF(4季滤镜实测)
+![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/sample_k70_4season.png)
 ## 运行
 
 发布文件：`dist/PDCU-Season-Params.exe`
