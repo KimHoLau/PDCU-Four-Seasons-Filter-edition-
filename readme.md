@@ -1,6 +1,10 @@
 # PDCU 四季参数补齐工具（GUI 版）v1.7
 
 ![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/PDCU-GUI.png)
+
+## PDCU4季滤镜-色彩雷达图
+![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/4Season-Color-Radar.png)
+
 ## K70->KF(4季滤镜实测)
 ![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/sample_k70_4season.png)
 ## 运行
