@@ -1,40 +1,4 @@
-一、Ghidra 分析结果
-“自定义影像”列表的构建函数是 FUN_1401faed0。它对每个模式做条件判断：
-if (imageTone == 0x1D) {            // HARUBENI
-  if (obj != NULL && obj[0x15] != 0 && FUN_140eda6a0(obj)) addMenuItem(...);
-}
-else if (imageTone == 0x1E) { ... FUN_140eda790(obj) ... }  // KATEN
-else if (imageTone == 0x1F) { ... FUN_140eda880(obj) ... }  // KYUSHU
-else if (imageTone == 0x20) { ... FUN_140eda970(obj) ... }  // FUYUNO
-else addMenuItem(...);                                       // 其它模式无条件加入
-
-而四个资格函数最终只是返回对象里的四个字节：
-return *(char *)(obj + 0x4600);  // HARUBENI
-return *(char *)(obj + 0x4601);  // KATEN
-return *(char *)(obj + 0x4602);  // KYUSHU
-return *(char *)(obj + 0x4603);  // FUYUNO
-
-这四个字节由 FUN_140ed9610 根据机身/镜头/固件计算——这就是我们改元数据始终绕不过去的原因：它不是读 Model 字符串，而是解析 PEF 参数集后算出的能力位。
-
-二、补丁内容
-在调用点后面是标准的：
-E8 xx xx xx xx     call  FUN_140eda6xx
-84 C0              test  al, al
-0F 84 xx xx xx xx  jz    skip_add
-
-我把 4 处 jz（每个 6 字节）全部改成 90 90 90 90 90 90，于是不管能力位真假，都会继续执行“添加菜单项”。
-已生成补丁副本（原 exe 未动）：
-
-三、已完成的改动
-项	内容
-目标文件	Digital Camera Utility 5.exe
-备份	Digital Camera Utility 5.exe.bak（原版，SHA-256 D55EC396…75D387）
-修改点	4 处 jz（每个 6 字节）→ 90 90 90 90 90 90
-地址	0x1FAC52、0x1FACAF、0x1FAD0C、0x1FAD69
-新 SHA-256	71697A61F2A18FCD414688A0CDB4EB48394FFF1EDA078D36B5AD215C2285B2DF
-签名状态	HashMismatch（符合预期，见下方风险）
-
-四、镜头相关性与「正确的 KYUSHU」（2026-10-23 修正）
+一、镜头相关性与「正确的 KYUSHU」（2026-10-23 修正）
 - 用同一张 DNG 只改镜头标识（`LensType` 0x003f），渲染逐像素一致：镜头不参与调色，只决定菜单资格。
 - 同一张 IMGP1157.DNG 只改 `ImageTone`（12 / 15 / 31 / 8）会得到不同的雷达图和画面，
   说明「菜单里的 KYUSHU」与「相机记录在文件里的那一套」不是同一个参数状态。
@@ -42,7 +6,7 @@ E8 xx xx xx xx     call  FUN_140eda6xx
   该状态目前还没在确定性操作下复现（菜单是自绘列表，滚动位置会影响点选）。
 详见 `docs/PDCU-KYUSHU-镜头无关性验证.md`。
 
-五、供体移植工具（近似方案）
+二、供体移植工具（近似方案）
 PDCU 的 KYUSHU 依赖相机写进 DNG 私有块里的那套参数；非机内 KYUSHU 的文件没有它。
 可以用一张机内 KYUSHU 的 DNG 当“供体”，把私有块前 15,031 字节（`0x3AB7`）写进目标：
 
@@ -59,7 +23,7 @@ python tools/kyushu_transplant.py --donor sample\IMGP1157.DNG --target sample\IM
 - **近似**：会带入供体的影调/白平衡，可能偏暖；选光线接近的供体，输出后在 PDCU 里再校正。
 - 不改输入文件。
 
-六、`pentax_seasons.exe` 是什么（2026-10-23 分析）
+三、`pentax_seasons.exe` 是什么（2026-10-23 分析）
 网上流传的 `tools/pentax_seasons.exe` 不是“让 PDCU 认出 KYUSHU”的工具，实测结论：
 
 - 它是 PyInstaller 打包的 Python 3.11 / tkinter 小程序（源码 `\\Mac\BAK\pentax_f\pentax_seasons.py`）；
@@ -71,12 +35,7 @@ python tools/kyushu_transplant.py --donor sample\IMGP1157.DNG --target sample\IM
 - 完整分析见 `docs/PDCU-pentax_seasons工具分析.md`；等价的命令行复现在
   `tools/pentax_seasons.py`（`analyze` 解释判断过程，`convert` 与 exe 输出 0 字节差异）。
 
-七、风险提示
-数字签名已失效，Windows SmartScreen/杀软可能提示“未知发布者”或拦截；这是修改官方二进制的必然结果。
-不要在校验签名的环境（如某些企业策略）里使用。
-功能层面已验证正常；但这是绕过相机端“机身+镜头+SE 固件”授权逻辑，仅建议个人研究/兼容用途。
-
-八、工具兼容性更新（2026-10-26）
+四、工具兼容性更新（2026-10-26）
 - `tools/dng_season_params.py` 与 `dist/PDCU-Season-Params.exe` v1.3 已支持老固件 K-1
   的带填充 `0x021A`：长度不能整除时按 `recordSize = 2 × (nParams + 1)` 识别，
   尾部保留区忽略。
