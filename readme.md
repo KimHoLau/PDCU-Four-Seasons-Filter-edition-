@@ -5,36 +5,36 @@
 ## PDCU4季滤镜-色彩雷达图
 ![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/4Season-Color-Radar.png)
 
-## K70->KF(4季滤镜实测)
-![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/sample_k70_4season.png)
-
-## 九机型四季实测（2026-10）
+## 所有机型四季实测（2026-10-27）
 ![image](docs/PDCU-九机型四季总览.png)
 
 九台机身、同一场景、同一套 PDCU 5.10.2.2 渲染，仅切换“自定义影像”。
 每机型的四季效果图、矩阵残差、色卡 ΔE 与渲染一致性见
 [`docs/PDCU-九机型四季实测.md`](docs/PDCU-九机型四季实测.md)。
+
+## 所有机型排名统计（2026-10-28）
+[`docs/PDCU-支持机型四季水准排名.md`](docs/PDCU-支持机型四季水准排名.md)。
+
 ## 运行
 
 发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.1.zip`）
 
-双击运行，不需要安装 Python。首次运行 Windows SmartScreen 可能提示
+双击运行，首次运行 Windows SmartScreen 可能提示
 “未知发布者”，选择“更多信息 -> 仍要运行”。
 
 ## 版本
-
-- **v2.0**：新增 **PENTAX KP / K-S2 / K-50 / Q7**。KP、K-S2 与 K-3 一样，
-  加文件即按目标自己的 `0x021B` 基准矩阵自动校准；K-50、Q7 机内完全没有
-  `0x021A` / `0x021B`，工具新建标签，并用各自 DNG ColorMatrix2 推算的
-  `Y` 校准 KF 四季矩阵（K-50 与 K-3 校准线只差 3.7×10⁻⁵，Q7 为小底推算）。
-  九台同场景实测见
-  [`docs/PDCU-九机型四季实测.md`](docs/PDCU-九机型四季实测.md)。
 - **v2.1**：K-30 的内置表改用 K-30 自己的 ColorMatrix2 校准（与 K-50 / K-01
   同一公式），不再用 K-3 基准代理，与旧表相比只有 6 个 Q13 系数差 1 个 LSB；
   K-01 的内置表也按 `sample/K01.DNG` 的 `0xC622` 原值重算，2 个系数各修正
   1 个 LSB。新增 `CM2 check`：用目标 DNG 的 ColorMatrix2 复核 `0x021B` 基准，
   偏差 >1×10⁻³ 时日志告警（645Z / K-S2 会触发；实测 PDCU 的屏幕渲染与
   另存 JPEG 都不读 CM2，校准仍以 `0x021B` 为准）。
+- **v2.0**：新增 **PENTAX KP / K-S2 / K-50 / Q7**。KP、K-S2 与 K-3 一样，
+  加文件即按目标自己的 `0x021B` 基准矩阵自动校准；K-50、Q7 机内完全没有
+  `0x021A` / `0x021B`，工具新建标签，并用各自 DNG ColorMatrix2 推算的
+  `Y` 校准 KF 四季矩阵（K-50 与 K-3 校准线只差 3.7×10⁻⁵，Q7 为小底推算）。
+  九台同场景实测见
+  [`docs/PDCU-九机型四季实测.md`](docs/PDCU-九机型四季实测.md)。
 - **v1.9**：支持 **Digital Camera Utility 5 另存的 DNG**。这类文件的 Pentax
   MakerNote 在 EXIF `0x927C`（不是 `0xC634`）；工具现在按同样的私有 IFD
   结构读取，并在 `0x021B` 后没有空位时把矩阵表迁到 MakerNote 内空闲区。
