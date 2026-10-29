@@ -1,0 +1,269 @@
+{
+ "model": "PENTAX K-1 Mark II",
+ "tool": "tools/dng_season_params.py --builtin k1ii",
+ "input": {
+  "file": "sample/K1ii.dng",
+  "size": 49912238,
+  "sha256": "F219F34D4748BC6BC8CE8A6213743FE3D3761B71CA102C9A8847E6D74D453978",
+  "private_block": [
+   934,
+   161306,
+   160372
+  ],
+  "private_ifd_entries": 121,
+  "records": 28,
+  "matrices": 21,
+  "table": [
+   9482,
+   1146,
+   12,
+   26,
+   390
+  ],
+  "matrix_table": [
+   10630,
+   382
+  ],
+  "seasons": []
+ },
+ "output": {
+  "file": "sample/K1ii_all.dng",
+  "size": 49912238,
+  "sha256": "33FCCDF4D3DC42B0ED242673C9F0A7DCDABB5A07F247D86287B0058696971493",
+  "records": 32,
+  "matrices": 25,
+  "table": [
+   9482,
+   860,
+   12,
+   26
+  ],
+  "matrix_table": [
+   10342,
+   454
+  ],
+  "season_matrix_index": {
+   "29": 21,
+   "30": 22,
+   "31": 23,
+   "32": 24
+  },
+  "table_relocated": false,
+  "blocks_relocated": true,
+  "changed_ranges": 28,
+  "changed_bytes": 524,
+  "all_changes_inside_private": true,
+  "outside_private_equal": true
+ },
+ "identity": {
+  "base_matrix_equal_k1": true,
+  "all_21_base_matrices_equal_k1": true,
+  "all_28_mode_records_equal_k1": true,
+  "cm2_y_delta": 1.4e-06,
+  "season_matrix_maxdiff_k1": 0.0,
+  "season_style_maxdiff_k1": 0.0
+ },
+ "base_matrix_q13": [
+  12032,
+  -3872,
+  32,
+  -1856,
+  12576,
+  -2528,
+  288,
+  -3392,
+  11296
+ ],
+ "cm2": [
+  [
+   0.89349365234375,
+   -0.286376953125,
+   -0.1253204345703125
+  ],
+  [
+   -0.361175537109375,
+   1.22039794921875,
+   0.1549835205078125
+  ],
+  [
+   -0.090484619140625,
+   0.17022705078125,
+   0.63458251953125
+  ]
+ ],
+ "seasons": {
+  "HARUBENI": {
+   "record_id": 29,
+   "matrix_index": 21,
+   "matrix_q13": [
+    12882,
+    -1949,
+    -2741,
+    -3399,
+    16261,
+    -4670,
+    -2196,
+    1965,
+    8423
+   ],
+   "record_hex": "1d00010002000300ffffffffffff00000000feff040015000000",
+   "equal_k1_matrix": true,
+   "matrix_maxdiff_k1": 0.0,
+   "style_maxdiff_k1": 0.0,
+   "style_maxdiff_kf": 7.016388690406217e-05
+  },
+  "KATEN": {
+   "record_id": 30,
+   "matrix_index": 22,
+   "matrix_q13": [
+    14049,
+    -5687,
+    -170,
+    -1980,
+    15134,
+    -4962,
+    1137,
+    -5018,
+    12073
+   ],
+   "record_hex": "1e000100080004000100ffffffff00000300fdffffff16000000",
+   "equal_k1_matrix": true,
+   "matrix_maxdiff_k1": 0.0,
+   "style_maxdiff_k1": 0.0,
+   "style_maxdiff_kf": 5.88062381616794e-05
+  },
+  "KYUSHU": {
+   "record_id": 31,
+   "matrix_index": 23,
+   "matrix_q13": [
+    13532,
+    -7116,
+    1776,
+    528,
+    8064,
+    -400,
+    -197,
+    825,
+    7564
+   ],
+   "record_hex": "1f000100040001000100ffffffffffff0000ffffffff17000000",
+   "equal_k1_matrix": true,
+   "matrix_maxdiff_k1": 0.0,
+   "style_maxdiff_k1": 0.0,
+   "style_maxdiff_kf": 7.297869835354298e-05
+  },
+  "FUYUNO": {
+   "record_id": 32,
+   "matrix_index": 24,
+   "matrix_q13": [
+    8257,
+    159,
+    -224,
+    -1090,
+    10323,
+    -1041,
+    277,
+    945,
+    6970
+   ],
+   "record_hex": "20000100080004000100ffffffff0300fcff0400ffff18000000",
+   "equal_k1_matrix": true,
+   "matrix_maxdiff_k1": 0.0,
+   "style_maxdiff_k1": 0.0,
+   "style_maxdiff_kf": 4.686250787100388e-05
+  }
+ },
+ "render": {
+  "as_shot_exact_equal": true,
+  "stock_mean_rgb": [
+   84.78250949844397,
+   83.64343908759396,
+   79.58918557243203
+  ],
+  "patched_mean_rgb": [
+   84.78250949844397,
+   83.64343908759396,
+   79.58918557243203
+  ],
+  "as_shot_mean_abs_diff": 0.0,
+  "as_shot_max_diff": 0.0,
+  "ratios": {
+   "HARUBENI": [
+    1.0431456049921892,
+    0.9418636290098363,
+    0.9398986530835233
+   ],
+   "KATEN": [
+    0.9446016529692389,
+    0.9322023165921736,
+    0.9310626836785695
+   ],
+   "KYUSHU": [
+    0.9181225650274631,
+    0.9192955481558439,
+    0.9392974109591654
+   ],
+   "FUYUNO": [
+    1.2462412140670083,
+    1.2510037239071807,
+    1.2910851047541188
+   ]
+  },
+  "vs_as_shot_mad": {
+   "HARUBENI": 5.402151997088706,
+   "KATEN": 13.898768601300247,
+   "KYUSHU": 7.733011714024372,
+   "FUYUNO": 21.89383293962594
+  },
+  "vs_nine_body_raw_max_pct": {
+   "HARUBENI": 1.960390339279526,
+   "KATEN": 1.4274473238045602,
+   "KYUSHU": 1.8075195225425773,
+   "FUYUNO": 0.5153143713336087
+  },
+  "vs_nine_body_color_max_pct": {
+   "HARUBENI": 0.6245580550336527,
+   "KATEN": 0.4581208409338733,
+   "KYUSHU": 0.48483431648105313,
+   "FUYUNO": 0.2799250802330788
+  },
+  "vs_k1_raw_max_pct": {
+   "HARUBENI": 0.3438663206085626,
+   "KATEN": 0.8218705599518018,
+   "KYUSHU": 0.5801831399958364,
+   "FUYUNO": 0.8188669163502835
+  },
+  "vs_k1_color_max_pct": {
+   "HARUBENI": 0.4111999637875785,
+   "KATEN": 0.2749645150622593,
+   "KYUSHU": 0.24699227433688797,
+   "FUYUNO": 0.5275100588236437
+  },
+  "screenshots": [
+   "docs/PDCU-K1II-四季效果.png"
+  ]
+ },
+ "pdcu": {
+  "version": "5.10.2.2",
+  "model_shown": "PENTAX K-1 Mark II",
+  "menu": [
+   "HARUBENI",
+   "KATEN",
+   "KYUSHU",
+   "FUYUNO"
+  ],
+  "screenshots": [
+   "docs/PDCU-K1II-相机信息.png",
+   "docs/PDCU-K1II-四季菜单.png",
+   "docs/PDCU-K1II-四季效果.png"
+  ]
+ },
+ "tool_version": "2.4",
+ "release": {
+  "exe_sha256": "F280A86927743B0050C1AB9AFE7C44DD0FB4B0EE8FDA8208B5E602DB95E83A2A",
+  "zip_sha256": "2CE436146D39F9EC1237B9C693B4141F3E234F3851BDEA41147FB8CAF3F15FAC",
+  "exe_size": 12601356,
+  "zip_size": 12355557,
+  "selftest_output_sha256": "33FCCDF4D3DC42B0ED242673C9F0A7DCDABB5A07F247D86287B0058696971493"
+ }
+}

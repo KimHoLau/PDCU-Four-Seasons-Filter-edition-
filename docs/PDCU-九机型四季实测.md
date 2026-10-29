@@ -5,6 +5,13 @@
 样本：sample/645Z.dng、K1.dng、K3.dng、K3ii.dng、K50.dng、K70.dng、KP.dng、KS2.dng、Q7.dng
 （九台机身拍同一张测试场景：ColorChecker + 人像 + 织物/羽毛/酒瓶）
 
+> v2.3 新增的 MX-1 也拍同一场景，作为第十台单独记录在
+> [PDCU-MX1-KF四季移植.md](PDCU-MX1-KF四季移植.md)；本文的九台数值未改动。
+>
+> v2.4 新增的 K-1 Mark II 也拍同一场景（第 17 台）。它的 28 条模式记录和
+> 21 个基础矩阵与 K-1 逐字节相同，因此直接复用 K-1 原生四季表；实测记录在
+> [PDCU-K1II-四季移植.md](PDCU-K1II-四季移植.md)。
+
 渲染：Digital Camera Utility 5 **5.10.2.2**（PDCU），直接打开补好的 DNG，
 只在“自定义影像”里切换模式，不做曝光/白平衡/色彩微调。
 
