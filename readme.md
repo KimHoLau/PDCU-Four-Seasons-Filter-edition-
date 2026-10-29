@@ -25,6 +25,16 @@ K-1 Mark II 的 28 条模式记录、21 个基础矩阵与 K-1 **逐字节相同
 菜单与四季实测见 [`docs/PDCU-K1II-四季移植.md`](docs/PDCU-K1II-四季移植.md)，
 效果图 [`docs/PDCU-K1II-四季效果.png`](docs/PDCU-K1II-四季效果.png)。
 
+## K-1 KYUSHU 四季文件对照判定（2026-10-29）
+
+同一张 K-1 场景，比较本工具与 `pentax_seasons` 产出的四季 DNG/JPG：
+本工具的 DNG 里 KYUSHU 矩阵与 K-1 机内 **逐字节相同**（相对风格残差 0），
+`pentax_seasons` 的文件只有四季的影调记录、矩阵索引全部越界（KYUSHU 指向 #24，
+但文件只有 #0–#20）。两张 PDCU KYUSHU JPG 平均只差 **ΔE00 1.15**，但本工具那张
+更冷、更淡，方向与 KYUSHU 的“压暗、偏冷/低饱和”一致。分析见
+[`docs/PDCU-KYUSHU-四季对比判定.md`](docs/PDCU-KYUSHU-四季对比判定.md)，
+对比图 [`docs/PDCU-KYUSHU-四季对比.jpg`](docs/PDCU-KYUSHU-四季对比.jpg)。
+
 ## 所有机型排名统计（2026-10-29）
 [`docs/PDCU-支持机型四季水准排名.md`](docs/PDCU-支持机型四季水准排名.md)。
 
