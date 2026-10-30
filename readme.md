@@ -5,7 +5,7 @@
 ## PDCU4季滤镜-色彩雷达图
 ![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/4Season-Color-Radar.png)
 
-## 四季滤镜兼容机型及适配情况统计表
+## 四季滤镜兼容机型及适配情况统计表（S档>A档>B档）
 | # | 机型 | 档 | 四季数据来源 | max\|ΔR\| | 验证 |
 |---:|---|---|---|---:|---|
 | 1 | **PENTAX KF** | S | 机内原生四季表（本项目基准） | 0 | donor 本体 |
