@@ -23,28 +23,6 @@ import tkinter.font as tkfont
 from tkinter import filedialog, ttk
 
 import dng_season_params as core
-import season_645d_data
-import season_k01_data
-import season_k1_data
-import season_k1ii_data
-import season_k30_data
-import season_k50_data
-import season_kf_data
-import season_mx1_data
-import season_q7_data
-
-# Bodies whose 0x021B table is the KF style table times one calibration: the
-# KF built-in data is transplanted after calibrating it to the target's own
-# base matrix, so no "cross model" opt-in is needed.
-CALIBRATED_MODELS = {
-    "PENTAX K-3",
-    "PENTAX K-3 II",
-    "PENTAX K-5 II",
-    "PENTAX K-5 II s",
-    "PENTAX 645Z",
-    "PENTAX KP",
-    "PENTAX K-S2",
-}
 
 APP_TITLE = "PDCU MOD"
 APP_VERSION = "2.5"
@@ -83,49 +61,6 @@ SEASONS = (
 def resource_path(name: str) -> str:
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, name)
-
-
-# The season_* modules are imported here on purpose: PyInstaller only bundles
-# modules it can see statically, and core.builtin_donor() imports them lazily.
-_BUILTIN_MODULES = (season_k1_data, season_k1ii_data, season_kf_data,
-                    season_645d_data, season_k30_data, season_k01_data,
-                    season_k50_data, season_q7_data, season_mx1_data)
-
-
-def make_builtin_donor() -> core.DonorData:
-    return core.builtin_donor("k1")
-
-
-def make_builtin_k1ii_donor() -> core.DonorData:
-    return core.builtin_donor("k1ii")
-
-
-def make_builtin_kf_donor() -> core.DonorData:
-    return core.builtin_donor("kf")
-
-
-def make_builtin_645d_donor() -> core.DonorData:
-    return core.builtin_donor("645d")
-
-
-def make_builtin_k30_donor() -> core.DonorData:
-    return core.builtin_donor("k30")
-
-
-def make_builtin_k01_donor() -> core.DonorData:
-    return core.builtin_donor("k01")
-
-
-def make_builtin_k50_donor() -> core.DonorData:
-    return core.builtin_donor("k50")
-
-
-def make_builtin_q7_donor() -> core.DonorData:
-    return core.builtin_donor("q7")
-
-
-def make_builtin_mx1_donor() -> core.DonorData:
-    return core.builtin_donor("mx1")
 
 
 def output_for(target: str, out_dir: str | None) -> str:
@@ -770,14 +705,8 @@ class App(tk.Tk):
         self.source_card = card
 
         self.donor_mode = tk.StringVar(value="builtin")
-        rows = (
-            ("builtin", "内置 K-1 / K-1 Mark II"),
-            ("builtin_kf", "内置 KF / K-70"),
-            ("builtin_645d", "内置 645D"),
-            ("builtin_k30", "内置 K-30 系列"),
-        )
-        for index, (value, title) in enumerate(rows):
-            OptionRow(card.body, title, value=value,
+        for index, source in enumerate(core.BUILTIN_SOURCES.values()):
+            OptionRow(card.body, source.label, value=source.key,
                       variable=self.donor_mode,
                       command=self._donor_mode_changed
                       ).pack(fill="x", pady=(0 if index == 0 else 4, 0))
@@ -903,38 +832,29 @@ class App(tk.Tk):
         models = {self._model_of(p) for p in self.targets}
         if "" in models:
             return
-        current = self.donor_mode.get()
-        builtin_modes = ("builtin", "builtin_kf", "builtin_k30", "builtin_645d")
-        if current not in builtin_modes:
+        if self.donor_mode.get() not in core.BUILTIN_SOURCES:
             return
-
-        def choose(mode: str, message: str) -> None:
-            self.donor_mode.set(mode)
-            self._donor_mode_changed()
-            self.status_var.set(message)
-
-        if models <= {"PENTAX KF", "PENTAX K-70"}:
-            choose("builtin_kf", "检测到 KF / K-70，已选择「内置 KF / K-70」")
-        elif models <= {"PENTAX K-30", "PENTAX K-01", "PENTAX K-50",
-                        "PENTAX Q7", "PENTAX MX-1"}:
-            choose("builtin_k30", "检测到 K-30 系列，已选择「内置 K-30 系列」")
-        elif models <= {"PENTAX K-1", "PENTAX K-1 Mark II"}:
-            choose("builtin", "检测到 K-1 / K-1 Mark II，已选择「内置 K-1」")
-        elif models == {"PENTAX 645D"}:
-            choose("builtin_645d", "检测到 645D，已选择「内置 645D」")
-        elif models <= CALIBRATED_MODELS:
-            choose("builtin_kf", "检测到 K-3 / K-5 / 645Z 等机型，"
-                                 "已选择「内置 KF / K-70」")
-        elif len(models) > 1:
+        sources = {core.source_for_model(model) for model in models}
+        if None in sources:
+            if len(models) > 1:
+                self.status_var.set("检测到多种机型，请分批处理或使用 DNG 来源")
+            else:
+                model = next(iter(models))
+                self.status_var.set("检测到 %s，请选择来源或使用 DNG 文件" % model)
+            return
+        if len(sources) > 1:
             self.status_var.set("检测到多种机型，请分批处理或使用 DNG 来源")
-        else:
-            model = next(iter(models))
-            self.status_var.set("检测到 %s，请选择来源或使用 DNG 文件" % model)
+            return
+        source = next(iter(sources))
+        self.donor_mode.set(source.key)
+        self._donor_mode_changed()
+        self.status_var.set("检测到 %s，已选择「%s」"
+                            % ("、".join(sorted(models)), source.label))
 
     # ---------- options ----------
     def _donor_mode_changed(self) -> None:
         mode = self.donor_mode.get()
-        if mode == "file":
+        if mode == core.CUSTOM_DONOR_MODE:
             name = os.path.basename(self.custom_donor) if self.custom_donor else ""
             self.donor_name.configure(text=self._shorten(name) if name else "未选择",
                                       fg=ACCENT if name else TEXT_MUTE)
@@ -960,7 +880,7 @@ class App(tk.Tk):
             filetypes=[("DNG 文件", "*.DNG *.dng"), ("所有文件", "*.*")])
         if path:
             self.custom_donor = os.path.abspath(path)
-            self.donor_mode.set("file")
+            self.donor_mode.set(core.CUSTOM_DONOR_MODE)
             self._donor_mode_changed()
             self.status_var.set("已选择 DNG 来源：%s"
                                 % os.path.basename(self.custom_donor))
@@ -994,7 +914,7 @@ class App(tk.Tk):
 
         donor_mode = self.donor_mode.get()
         donor_path = self.custom_donor
-        if donor_mode == "file":
+        if donor_mode == core.CUSTOM_DONOR_MODE:
             if not donor_path or not os.path.isfile(donor_path):
                 show_alert(self, "提示", "请选择一个有效的 DNG 文件。", "warning")
                 return
@@ -1045,7 +965,8 @@ class App(tk.Tk):
                 show_alert(self, "来源不匹配", "\n".join(lines), "warning")
                 return
 
-        allow_cross = bool(self.allow_cross_model.get()) and donor_mode == "file"
+        allow_cross = (bool(self.allow_cross_model.get())
+                       and donor_mode == core.CUSTOM_DONOR_MODE)
 
         self.start_btn.set_enabled(False)
         self.open_btn.set_enabled(False)
@@ -1066,26 +987,14 @@ class App(tk.Tk):
     def _worker(self, targets, donor_mode, donor_path, out_dir, overwrite,
                 allow_cross) -> None:
         donors = {}
+        source = core.BUILTIN_SOURCES.get(donor_mode)
         try:
-            if donor_mode == "builtin":
-                donors["default"] = make_builtin_donor()
-                donors["k1ii"] = make_builtin_k1ii_donor()
-                self.queue.put(("log", "季节来源：内置 K-1 / K-1 Mark II 四季参数"))
-            elif donor_mode == "builtin_kf":
-                donors["default"] = make_builtin_kf_donor()
-                self.queue.put(("log", "季节来源：内置 KF / K-70 四季参数"))
-            elif donor_mode == "builtin_645d":
-                donors["default"] = make_builtin_645d_donor()
-                self.queue.put(("log", "季节来源：内置 645D 四季参数"))
-            elif donor_mode == "builtin_k30":
-                donors["k30"] = make_builtin_k30_donor()
-                donors["k01"] = make_builtin_k01_donor()
-                donors["k50"] = make_builtin_k50_donor()
-                donors["q7"] = make_builtin_q7_donor()
-                donors["mx1"] = make_builtin_mx1_donor()
-                self.queue.put(("log", "季节来源：内置 K-30 系列四季参数"))
+            if source is not None:
+                donors = {kind: core.builtin_donor(kind)
+                          for kind in source.kinds}
+                self.queue.put(("log", "季节来源：%s四季参数" % source.label))
             else:
-                donors["default"] = core.Dng(donor_path)
+                donors[core.CUSTOM_DONOR_MODE] = core.Dng(donor_path)
                 self.queue.put(("log", "季节来源：%s" % donor_path))
         except Exception:
             self.queue.put(("log", "读取 donor 失败：\n" + traceback.format_exc()))
@@ -1100,23 +1009,19 @@ class App(tk.Tk):
             self.queue.put(("log", "[%d/%d] %s" % (i, len(targets), target)))
             try:
                 model = self._model_of(target)
-                if donor_mode == "builtin":
-                    donor = (donors["k1ii"] if model == "PENTAX K-1 Mark II"
-                             else donors["default"])
-                elif donor_mode == "builtin_k30":
-                    donor = donors.get({
-                        "PENTAX K-01": "k01",
-                        "PENTAX K-50": "k50",
-                        "PENTAX Q7": "q7",
-                        "PENTAX MX-1": "mx1",
-                    }.get(model, "k30"), donors["k30"])
+                if source is not None:
+                    kind = core.donor_kind_for_model(model)
+                    if kind not in donors:
+                        raise core.DngError(
+                            "内置来源不适用于机型 %r" % (model or "无法识别"))
+                    donor = donors[kind]
+                    if kind == "k1ii":
+                        self.queue.put((
+                            "log",
+                            "  K-1 Mark II：使用 K-1 原生四季表（Y=I，"
+                            "28 条记录 / 21 个基础矩阵与 K-1 逐字节相同）"))
                 else:
-                    donor = donors["default"]
-                if donor_mode == "builtin" and model == "PENTAX K-1 Mark II":
-                    self.queue.put((
-                        "log",
-                        "  K-1 Mark II：使用 K-1 原生四季表（Y=I，"
-                        "28 条记录 / 21 个基础矩阵与 K-1 逐字节相同）"))
+                    donor = donors[core.CUSTOM_DONOR_MODE]
                 res = core.convert_file(
                     target, out, donor, overwrite=overwrite,
                     allow_cross_model=allow_cross)
@@ -1234,33 +1139,8 @@ def selftest(argv) -> int:
     """Hidden build test: --selftest[-cross|-kf] <target> <output>."""
     try:
         cross = "--selftest-cross" in argv
-        k1ii = "--selftest-k1ii" in argv
-        kf = "--selftest-kf" in argv
-        k30 = "--selftest-k30" in argv
-        k01 = "--selftest-k01" in argv
-        k50 = "--selftest-k50" in argv
-        q7 = "--selftest-q7" in argv
-        mx1 = "--selftest-mx1" in argv
-        d645 = "--selftest-645d" in argv
         target, out = argv[-2], argv[-1]
-        if k1ii:
-            donor = make_builtin_k1ii_donor()
-        elif d645:
-            donor = make_builtin_645d_donor()
-        elif mx1:
-            donor = make_builtin_mx1_donor()
-        elif q7:
-            donor = make_builtin_q7_donor()
-        elif k50:
-            donor = make_builtin_k50_donor()
-        elif k01:
-            donor = make_builtin_k01_donor()
-        elif k30:
-            donor = make_builtin_k30_donor()
-        elif kf:
-            donor = make_builtin_kf_donor()
-        else:
-            donor = make_builtin_donor()
+        donor = core.builtin_donor(core.selftest_donor_kind(argv) or "k1")
         res = core.convert_file(
             target, out, donor, overwrite=True, allow_cross_model=cross)
         log = out + ".selftest.txt"
@@ -1281,12 +1161,7 @@ def selftest(argv) -> int:
 
 
 def main() -> int:
-    if ("--selftest" in sys.argv or "--selftest-cross" in sys.argv
-            or "--selftest-k1ii" in sys.argv
-            or "--selftest-kf" in sys.argv or "--selftest-k30" in sys.argv
-            or "--selftest-k01" in sys.argv or "--selftest-k50" in sys.argv
-            or "--selftest-q7" in sys.argv or "--selftest-mx1" in sys.argv
-            or "--selftest-645d" in sys.argv):
+    if any(flag in sys.argv for flag in core.SELFTEST_FLAGS):
         return selftest(sys.argv)
     app = App()
     app.mainloop()

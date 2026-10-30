@@ -79,6 +79,16 @@ import struct
 import sys
 import time
 
+import season_645d_data
+import season_k01_data
+import season_k1_data
+import season_k1ii_data
+import season_k30_data
+import season_k50_data
+import season_kf_data
+import season_mx1_data
+import season_q7_data
+
 SEASON_NAMES = {
     0x1D: "HARUBENI",
     0x1E: "KATEN",
@@ -103,23 +113,86 @@ COMPATIBLE_MODEL_PAIRS = {
 NO_TABLE_MODELS = {"PENTAX K-30", "PENTAX K-01", "PENTAX K-50",
                    "PENTAX Q7", "PENTAX MX-1"}
 
-# Which camera bodies each GUI source is allowed to handle.  The four built-in
-# sources are deliberately narrow: selecting the K-1 table for a K-70 must be
-# refused instead of silently producing a cross-model calibration.  The
-# "allow other bodies' DNG" opt-in applies only to the custom-DNG source.
-BUILTIN_SOURCE_MODELS = {
-    "builtin": frozenset(("PENTAX K-1", "PENTAX K-1 Mark II")),
-    "builtin_kf": frozenset((
-        "PENTAX KF", "PENTAX K-70",
-        "PENTAX K-3", "PENTAX K-3 II", "PENTAX K-5 II", "PENTAX K-5 II s",
-        "PENTAX 645Z", "PENTAX KP", "PENTAX K-S2",
-    )),
-    "builtin_645d": frozenset(("PENTAX 645D",)),
-    "builtin_k30": frozenset((
-        "PENTAX K-30", "PENTAX K-01", "PENTAX K-50",
-        "PENTAX Q7", "PENTAX MX-1",
-    )),
+# One registry for every model -> built-in donor decision.  The GUI's source
+# rows, its automatic selection, the worker and the hidden selftest entry all
+# read this table instead of keeping their own if/elif ladders.
+BUILTIN_SOURCE_MODELS = {}
+MODEL_TO_DONOR_KIND = {
+    "PENTAX K-1": "k1",
+    "PENTAX K-1 Mark II": "k1ii",
+    "PENTAX KF": "kf",
+    "PENTAX K-70": "kf",
+    "PENTAX K-3": "kf",
+    "PENTAX K-3 II": "kf",
+    "PENTAX K-5 II": "kf",
+    "PENTAX K-5 II s": "kf",
+    "PENTAX 645Z": "kf",
+    "PENTAX KP": "kf",
+    "PENTAX K-S2": "kf",
+    "PENTAX 645D": "645d",
+    "PENTAX K-30": "k30",
+    "PENTAX K-01": "k01",
+    "PENTAX K-50": "k50",
+    "PENTAX Q7": "q7",
+    "PENTAX MX-1": "mx1",
 }
+
+
+class BuiltinSource:
+    """A GUI source row: label plus the donor kinds it can serve."""
+
+    def __init__(self, key, label, kinds):
+        self.key = key
+        self.label = label
+        self.kinds = tuple(kinds)
+
+    def __repr__(self):
+        return "BuiltinSource(%r, %r)" % (self.key, self.label)
+
+
+CUSTOM_DONOR_MODE = "file"
+
+BUILTIN_SOURCES = {
+    "builtin": BuiltinSource("builtin", "内置 K-1 / K-1 Mark II", ("k1", "k1ii")),
+    "builtin_kf": BuiltinSource("builtin_kf", "内置 KF / K-70", ("kf",)),
+    "builtin_645d": BuiltinSource("builtin_645d", "内置 645D", ("645d",)),
+    "builtin_k30": BuiltinSource("builtin_k30", "内置 K-30 系列",
+                                 ("k30", "k01", "k50", "q7", "mx1")),
+}
+KIND_TO_SOURCE = {
+    kind: source for source in BUILTIN_SOURCES.values() for kind in source.kinds
+}
+for _source in BUILTIN_SOURCES.values():
+    BUILTIN_SOURCE_MODELS[_source.key] = frozenset(
+        model for model, kind in MODEL_TO_DONOR_KIND.items()
+        if kind in _source.kinds
+    )
+del _source
+
+# Hidden build-test switches.  --selftest-cross is the K-1 donor with the
+# cross-model opt-in and is not a donor selector itself.
+SELFTEST_DONOR_FLAGS = {
+    "--selftest": "k1",
+    "--selftest-k1ii": "k1ii",
+    "--selftest-kf": "kf",
+    "--selftest-645d": "645d",
+    "--selftest-k30": "k30",
+    "--selftest-k01": "k01",
+    "--selftest-k50": "k50",
+    "--selftest-q7": "q7",
+    "--selftest-mx1": "mx1",
+}
+SELFTEST_FLAGS = tuple(SELFTEST_DONOR_FLAGS) + ("--selftest-cross",)
+
+
+def donor_kind_for_model(model):
+    """The bundled donor kind for a camera body, or None when unknown."""
+    return MODEL_TO_DONOR_KIND.get((model or "").strip())
+
+
+def source_for_model(model):
+    """The GUI source row that handles this body, or None when unknown."""
+    return KIND_TO_SOURCE.get(donor_kind_for_model(model))
 
 
 def builtin_source_allows(source, model):
@@ -127,6 +200,14 @@ def builtin_source_allows(source, model):
     model = (model or "").strip()
     allowed = BUILTIN_SOURCE_MODELS.get(source)
     return bool(model and allowed and model in allowed)
+
+
+def selftest_donor_kind(argv):
+    """Map the hidden --selftest flag to its bundled donor kind."""
+    for flag, kind in SELFTEST_DONOR_FLAGS.items():
+        if flag in argv:
+            return kind
+    return None
 
 # KF / K-1 share this _PEF_MODEPRM_SET parameter id list.  It is only used
 # when a target has no 0x021A table yet; existing tables keep their own.
@@ -1069,27 +1150,24 @@ class DonorData:
         return _u16(rec["bytes"], self.rec_size - 4, self.priv_endian)
 
 
+_BUILTIN_DATA_MODULES = {
+    "k1": season_k1_data,
+    "k1ii": season_k1ii_data,
+    "kf": season_kf_data,
+    "645d": season_645d_data,
+    "k30": season_k30_data,
+    "k01": season_k01_data,
+    "k50": season_k50_data,
+    "q7": season_q7_data,
+    "mx1": season_mx1_data,
+}
+BUILTIN_DONOR_KINDS = tuple(_BUILTIN_DATA_MODULES)
+
+
 def builtin_donor(kind):
     """Build a DonorData from one of the bundled season tables."""
-    if kind == "k1":
-        import season_k1_data as data
-    elif kind == "k1ii":
-        import season_k1ii_data as data
-    elif kind == "kf":
-        import season_kf_data as data
-    elif kind == "k30":
-        import season_k30_data as data
-    elif kind == "k01":
-        import season_k01_data as data
-    elif kind == "k50":
-        import season_k50_data as data
-    elif kind == "q7":
-        import season_q7_data as data
-    elif kind == "mx1":
-        import season_mx1_data as data
-    elif kind == "645d":
-        import season_645d_data as data
-    else:
+    data = _BUILTIN_DATA_MODULES.get(kind)
+    if data is None:
         raise DngError("unknown built-in donor %r" % kind)
     donor = DonorData(
         data.MODEL,
@@ -1805,8 +1883,7 @@ def main(argv=None):
         description="Add missing Pentax four-season mode records (tag 0x021A) to a DNG.")
     p.add_argument("--target", required=True, help="DNG to patch")
     p.add_argument("--donor", help="DNG that contains the missing season records")
-    p.add_argument("--builtin", choices=("k1", "k1ii", "kf", "k30", "k01",
-                                         "k50", "q7", "mx1", "645d"),
+    p.add_argument("--builtin", choices=BUILTIN_DONOR_KINDS,
                    help="use bundled season data instead of a donor DNG "
                         "(k1 for K-1, k1ii for K-1 Mark II, kf; "
                         "k30/k01/k50/q7/mx1 for bodies with no "
