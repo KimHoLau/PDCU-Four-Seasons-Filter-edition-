@@ -12,6 +12,10 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具
 双击运行，不需要安装 Python。首次运行 Windows SmartScreen 可能提示
 “未知发布者”，选择“更多信息 -> 仍要运行”。
 
+**命名例外**：产品名是 **PDCU MOD**，但 exe / zip、`InternalName` 和
+`OriginalFilename` 仍沿用 `PDCU-Season-Params`，用于兼容既有发布与脚本；
+Windows 文件属性里的 `FileDescription` / `ProductName` 仍是 **PDCU MOD**。
+
 ## 界面
 
 - 左侧：选择 DNG 文件（可多选）、输出位置、开始转换。

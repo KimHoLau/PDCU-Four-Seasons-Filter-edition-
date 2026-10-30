@@ -62,7 +62,16 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
 双击运行，首次运行 Windows SmartScreen 可能提示
 “未知发布者”，选择“更多信息 -> 仍要运行”。
 
+**命名例外**：产品名是 **PDCU MOD**，但发布文件仍沿用
+`PDCU-Season-Params.exe` / `PDCU-Season-ParamsV2.6.zip`，
+`InternalName` / `OriginalFilename` 也保持 `PDCU-Season-Params`。
+这是为了兼容既有发布、快捷方式和脚本；Windows 文件属性里的
+`FileDescription` / `ProductName` 仍为 **PDCU MOD**，不随文件名变化。
+
 ## 版本
+> 发布物命名沿用旧名 `PDCU-Season-Params`（exe / zip / InternalName /
+> OriginalFilename），产品名与文件属性中的 FileDescription / ProductName
+> 仍是 **PDCU MOD**；这是兼容既有发布与脚本的例外，详见「运行」。
 - **v2.5**：界面改为 Lightroom 暗黑风格：近黑画布、深色卡片、蓝色强调色、
   圆角控件与深色对话框；工具更名为 **PDCU MOD**，标题区加入 logo 和新的
   功能说明。「季节参数来源」精简为四个内置选项（K-1 / K-1 Mark II、
