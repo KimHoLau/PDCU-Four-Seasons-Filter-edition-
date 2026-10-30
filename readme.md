@@ -1,9 +1,8 @@
 # PDCU 四季参数补齐工具（GUI 版）v2.4
-
-![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/PDCU-GUI.png)
+![image](PDCU-GUI.jpg)
 
 ## PDCU4季滤镜-色彩雷达图
-![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/4Season-Color-Radar.png)
+![image](4Season-Color-Radar.png)
 
 ## 四季滤镜兼容机型及适配情况统计表（S档>A档>B档）
 | # | 机型 | 档 | 四季数据来源 | max\|ΔR\| | 验证 |
