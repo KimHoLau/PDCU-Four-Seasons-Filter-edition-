@@ -151,8 +151,8 @@ FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.7.
 
 | 产物 | 大小 |
 |---|---:|
-| `dist/PDCU-Season-Params.exe` | 19,370,196 B |
-| `dist/PDCU-Season-ParamsV2.7.zip`（exe + 使用说明） | 19,116,563 B |
+| `dist/PDCU-Season-Params.exe` | 19,370,256 B |
+| `dist/PDCU-Season-ParamsV2.7.zip`（exe + 使用说明） | 19,116,393 B |
 
 打包后 exe 的 14 组机型自检全部通过，与 v2.6 记录逐字节相同；转换逻辑与输出
 文件未改变。冻结版已在空目录启动，选择 `sample/645D.DNG` 后右侧正常显示
@@ -161,8 +161,8 @@ FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.7.
 SHA-256：
 
 ```
-exe    5BA8C102E8F0C476422F3E7EB7F7E6CF7DB3F2328B8CA5BBB50FF69C01B0144F
-zip    C5BB3F1F6ECE0C71873F517D4FC49157DA3EEE4043163584C6DA800A98507ADB
+exe    7710133E03127F28E6C8A829CD920B9082470634353EAED1F1DCB54242C82846
+zip    BE39CA616CAA854C09D49761BA6B3BDBC5041D67C5358B7FA8651433674A75C1
 ```
 
 ### v2.6 打包记录（2026-10-30）
@@ -436,8 +436,8 @@ v1.9 起还支持 **DCU 5 另存的 DNG**：它们的 Pentax MakerNote 在 EXIF 
    - **内置 K-1 / K-1 Mark II**：只适用于 `PENTAX K-1`、`PENTAX K-1 Mark II`；
    - **内置 KF / K-70**：只适用于 `PENTAX KF / K-70`，以及
      `K-3 / K-3 II / K-5 II / K-5 II s / 645Z / KP / K-S2`；
-   - **内置 645D**：只适用于 `PENTAX 645D`；
    - **内置 K-30 系列**：只适用于 `PENTAX K-30 / K-01 / K-50 / Q7 / MX-1`；
+   - **内置 645D**：只适用于 `PENTAX 645D`；
    - **高级**：选择一张 DNG 作为来源；其他机型可勾选「允许使用其他机型的 DNG」。
    内置来源与机型不匹配时，工具会在转换前拒绝并明确提示，不会生成输出文件；
    跨机型开关只影响「高级」里的自定义 DNG 来源。

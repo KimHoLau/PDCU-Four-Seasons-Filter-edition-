@@ -43,8 +43,8 @@ Windows 文件属性里的 `FileDescription` / `ProductName` 仍是 **PDCU MOD**
    - 内置 K-1 / K-1 Mark II：只适用于 PENTAX K-1、K-1 Mark II
    - 内置 KF / K-70：只适用于 PENTAX KF、K-70，以及 K-3、K-3 II、K-5 II、
      K-5 II s、645Z、KP、K-S2
-   - 内置 645D：只适用于 PENTAX 645D
    - 内置 K-30 系列：只适用于 PENTAX K-30、K-01、K-50、Q7、MX-1
+   - 内置 645D：只适用于 PENTAX 645D
    - 高级：选择一张 DNG 作为来源；其他机型可勾选「允许使用其他机型的 DNG」
    内置来源与机型不匹配时，转换前会拒绝并提示，不生成输出文件；
    跨机型开关只影响「高级」里的自定义 DNG 来源。

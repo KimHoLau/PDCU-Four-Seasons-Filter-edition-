@@ -158,12 +158,12 @@ BUILTIN_SOURCES = {
     "builtin_kf": BuiltinSource(
         "builtin_kf", "内置 KF / K-70", ("kf",),
         "季节来源：内置 KF / K-70 四季参数"),
-    "builtin_645d": BuiltinSource(
-        "builtin_645d", "内置 645D", ("645d",),
-        "季节来源：内置 645D 四季参数"),
     "builtin_k30": BuiltinSource(
         "builtin_k30", "内置 K-30 系列", ("k30", "k01", "k50", "q7", "mx1"),
         "季节来源：内置 K-30 系列四季参数"),
+    "builtin_645d": BuiltinSource(
+        "builtin_645d", "内置 645D", ("645d",),
+        "季节来源：内置 645D 四季参数"),
 }
 BUILTIN_SOURCE_MODELS = {
     source.key: frozenset(
