@@ -57,7 +57,7 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
 
 ## 运行
 
-发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.5.zip`）
+发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.6.zip`）
 
 双击运行，首次运行 Windows SmartScreen 可能提示
 “未知发布者”，选择“更多信息 -> 仍要运行”。
@@ -72,6 +72,11 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
 > 发布物命名沿用旧名 `PDCU-Season-Params`（exe / zip / InternalName /
 > OriginalFilename），产品名与文件属性中的 FileDescription / ProductName
 > 仍是 **PDCU MOD**；这是兼容既有发布与脚本的例外，详见「运行」。
+- **v2.6**：把「四季色彩」卡片从彩色圆点改为四张 24px 季节图标
+  （春红=樱花、夏至=雪山、九秋=红叶、冬日=枯枝雪景），图标随打包版一起
+  进入资源目录；单张图标缺失时该行自动回退为原来的圆点。版本号推进到
+  **2.6**，界面内显示与 Windows 文件属性一致。**转换逻辑与输出文件未变**，
+  14 组机型自检仍与 v2.5 参考值逐字节相同。
 - **v2.5**：界面改为 Lightroom 暗黑风格：近黑画布、深色卡片、蓝色强调色、
   圆角控件与深色对话框；工具更名为 **PDCU MOD**，标题区加入 logo 和新的
   功能说明。「季节参数来源」精简为四个内置选项（K-1 / K-1 Mark II、
@@ -131,6 +136,47 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
   并用 K-30 色彩空间校准 KF 四季矩阵。K-30 自动识别。
 - **v1.5**：内置 KF 四季参数，K-70 自动识别。
 - **v1.4**：内置 KF 数据；KF / K-70 按“基础矩阵相同”精确移植。
+
+### v2.6 打包记录（2026-10-30）
+
+构建：Python 3.14.3 + PyInstaller 6.22.3，`PDCU-Season-Params.spec`（onefile），
+FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.6.0.0**。
+四张季节 PNG 以 `assets` 资源目录打入 onefile，冻结版不依赖 exe 旁边的 assets。
+
+| 产物 | 大小 |
+|---|---:|
+| `dist/PDCU-Season-Params.exe` | 12,901,767 B |
+| `dist/PDCU-Season-ParamsV2.6.zip`（exe + 使用说明） | 12,655,626 B |
+
+打包后 exe 的 14 组机型自检全部通过，且与 v2.5 参考值逐字节相同；转换逻辑与
+输出文件均未改变：
+
+| 机型 | 自检参数 | 自检输出 SHA-256 |
+|---|---|---:|
+| K-1 Mark II | `--selftest-k1ii` | `33FCCDF4D3DC42B0ED242673C9F0A7DCDABB5A07F247D86287B0058696971493` |
+| K-1 | `--selftest` | `5F0B52CC1D116EAA48224C1A38722EBE6823ABADA3BDD7ED7F533C275E987584` |
+| K-70 | `--selftest-kf` | `5B44C9C1E9970C50928232255F74385FE15841345D8278E47BC77AFE422570D6` |
+| K-3 | `--selftest-kf` | `29C45ED9AB7812389BFFC825D67AD84FBF0A11A20828FE0CD3F94C8C1FF36D2B` |
+| K-3 II | `--selftest-kf` | `0829FA8975A9B3A38AE910B7446DECD51404CC49585487C6553CDADCD668376B` |
+| KP | `--selftest-kf` | `3BF7F56E17F2CDB83847E9C236B32F28F79E3A2CBC3C05330B83810601A91E22` |
+| K-S2 | `--selftest-kf` | `BA0DC8BA30CEF971DCD38DC7BCDE271DD23368F6C06D48BF071CFFF9096E9FAC` |
+| 645Z | `--selftest-kf` | `768EC1AAE05BD5E84AD374B7122DE711273054C8DE379BF1ECB89B4346988135` |
+| 645D | `--selftest-645d` | `E9497DE8099EB53401922103DC46144640EFE416080AE85B36AA40CD07AEBE62` |
+| K-30 | `--selftest-k30` | `328E52A671C26AA5E8524003E51F78A2F55475AA9665E4C6EECA5EB648A25AEC` |
+| K-01 | `--selftest-k01` | `06B87D743391237AC54EDC847CA8FA97982EDF87BC568F3311E5415B813B3745` |
+| K-50 | `--selftest-k50` | `D45021DE23B86628A4D3D3E862782C4149C06614AAD07E53017B044CB4F75F1A` |
+| Q7 | `--selftest-q7` | `7113270F5448D828C870F502994A138A57DEE27C4562D796437B69E82395600D` |
+| MX-1 | `--selftest-mx1` | `6CCF0D6238B28CEDF2DB040552A5802A204A4A4BD62BDD3F3188B50C3CE9448F` |
+
+冻结版已在空目录中单独启动验证：四季图标从 onefile 的 `assets` 读取并正常显示；
+另用缺少 `spring.png` 的测试构建验证，春红行回退为彩色圆点，其余三行与进程均正常。
+
+SHA-256：
+
+```
+exe    08E756555B2D4BB77B409CAAC050318936355FDE38E1501C78607CC551790E3E
+zip    7015AD7E09303F245D51118AD6DDB47DA44B3EFE683749E86436208E4B5CB6C9
+```
 
 ### v2.5 打包记录（2026-10-30）
 

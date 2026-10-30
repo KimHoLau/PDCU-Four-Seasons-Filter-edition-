@@ -1,4 +1,4 @@
-# PDCU MOD（GUI 版）v2.5
+# PDCU MOD（GUI 版）v2.6
 
 PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具
 (春红HARUBENI、夏至KATEN、九秋KYUSHU、冬日FUYUNO)
@@ -7,7 +7,7 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具
 
 ## 运行
 
-发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.5.zip`）
+发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.6.zip`）
 
 双击运行，不需要安装 Python。首次运行 Windows SmartScreen 可能提示
 “未知发布者”，选择“更多信息 -> 仍要运行”。
@@ -20,6 +20,8 @@ Windows 文件属性里的 `FileDescription` / `ProductName` 仍是 **PDCU MOD**
 
 - 左侧：选择 DNG 文件（可多选）、输出位置、开始转换。
 - 右侧：「季节参数来源」四个内置选项；添加文件后自动识别机型并选中。
+- 右侧「四季色彩」：春红 / 夏至 / 九秋 / 冬日各配一张 24px 季节图标；
+  图标缺失时回退为原来的彩色圆点。
 - 底部：运行日志；校准、结构迁移等细节都在这里。
 
 ## 使用步骤

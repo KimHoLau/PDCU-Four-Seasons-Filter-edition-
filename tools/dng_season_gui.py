@@ -25,7 +25,7 @@ from tkinter import ttk
 import dng_season_params as core
 
 APP_TITLE = "PDCU MOD"
-APP_VERSION = "2.5"
+APP_VERSION = "2.6"
 APP_INTRO = ("PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具"
              "(春红HARUBENI、夏至KATEN、九秋KYUSHU、冬日FUYUNO)")
 COPYRIGHT = "版权所有 © 2026 KimHoLau X deepseek harness"
