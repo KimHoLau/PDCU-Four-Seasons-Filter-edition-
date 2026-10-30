@@ -1,4 +1,4 @@
-# PDCU MOD（GUI 版）v2.6
+# PDCU MOD（GUI 版）v2.7
 
 PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具
 (春红HARUBENI、夏至KATEN、九秋KYUSHU、冬日FUYUNO)
@@ -7,7 +7,7 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具
 
 ## 运行
 
-发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.6.zip`）
+发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.7.zip`）
 
 双击运行，不需要安装 Python。首次运行 Windows SmartScreen 可能提示
 “未知发布者”，选择“更多信息 -> 仍要运行”。
@@ -22,6 +22,8 @@ Windows 文件属性里的 `FileDescription` / `ProductName` 仍是 **PDCU MOD**
 - 右侧：「季节参数来源」四个内置选项；添加文件后自动识别机型并选中。
 - 右侧「四季色彩」：春红 / 夏至 / 九秋 / 冬日各配一张 24px 季节图标；
   图标缺失时回退为原来的彩色圆点。
+- 文件选择器：右侧实时显示选中 DNG 的机内 JPEG 预览（约 720×480），
+  后台读取，不会卡住窗口；没有预览的 DNG 会显示提示。
 - 底部：运行日志；校准、结构迁移等细节都在这里。
 
 ## 使用步骤
@@ -31,6 +33,9 @@ Windows 文件属性里的 `FileDescription` / `ProductName` 仍是 **PDCU MOD**
    文件夹后按「打开」进入，也可用「此电脑」切换驱动器、用「主目录 / 桌面 /
    下载 / 图片」快速定位；支持路径输入、返回上级或取消，取消不会改变原来的
    选择，中文 / 空格 / 长路径均可使用。
+
+![文件选择器与 DNG 预览](PDCU-文件选择器预览.png)
+
 2. 选择「季节参数来源」（面板只显示来源名称）：
    - 内置 K-1 / K-1 Mark II：只适用于 PENTAX K-1、K-1 Mark II
    - 内置 KF / K-70：只适用于 PENTAX KF、K-70，以及 K-3、K-3 II、K-5 II、
@@ -57,7 +62,8 @@ K-3 / K-5 / 645Z / KP / K-S2 使用 KF 数据并按机身自动适配。
 
 ## 从源码重新打包
 
-推荐直接使用仓库里的 spec（会带入图标、logo、版本和版权信息）：
+预览使用 Pillow 解码 DNG 内嵌 JPEG；从源码运行或重新打包前先
+`pip install pillow`（发布 exe 已内置）。spec 会带入图标、logo、版本和版权信息：
 
 ```powershell
 python -m PyInstaller --noconfirm --clean PDCU-Season-Params.spec

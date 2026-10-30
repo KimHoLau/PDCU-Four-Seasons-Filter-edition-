@@ -814,6 +814,18 @@ class Dng:
         """Return the inspection report; never writes to stdout."""
         return dng_report.describe_dng(self, SEASON_NAMES)
 
+    def preview_jpeg(self):
+        """Embedded Pentax private-block JPEG preview, or None."""
+        try:
+            ranges = self._precise_preview_ranges()
+        except Exception:
+            return None
+        for start, end, _label in ranges:
+            raw = bytes(self.data[start:end])
+            if raw.startswith(b"\xff\xd8") and raw.rstrip().endswith(b"\xff\xd9"):
+                return raw
+        return None
+
     def next_used_start(self, tag):
         """First private-block data range that starts at/after the given tag."""
         entry = self.priv_entries[tag]

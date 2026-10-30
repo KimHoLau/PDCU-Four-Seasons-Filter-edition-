@@ -57,13 +57,13 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
 
 ## 运行
 
-发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.6.zip`）
+发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.7.zip`）
 
 双击运行，首次运行 Windows SmartScreen 可能提示
 “未知发布者”，选择“更多信息 -> 仍要运行”。
 
 **命名例外**：产品名是 **PDCU MOD**，但发布文件仍沿用
-`PDCU-Season-Params.exe` / `PDCU-Season-ParamsV2.6.zip`，
+`PDCU-Season-Params.exe` / `PDCU-Season-ParamsV2.7.zip`，
 `InternalName` / `OriginalFilename` 也保持 `PDCU-Season-Params`。
 这是为了兼容既有发布、快捷方式和脚本；Windows 文件属性里的
 `FileDescription` / `ProductName` 仍为 **PDCU MOD**，不随文件名变化。
@@ -72,6 +72,10 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
 > 发布物命名沿用旧名 `PDCU-Season-Params`（exe / zip / InternalName /
 > OriginalFilename），产品名与文件属性中的 FileDescription / ProductName
 > 仍是 **PDCU MOD**；这是兼容既有发布与脚本的例外，详见「运行」。
+- **v2.7**：文件选择器加入 DNG 机内 JPEG 实时预览（约 720×480），后台读取
+  不卡窗口；单击文件夹后按「打开」进入，并补了「此电脑」与主目录/桌面/下载/
+  图片快捷位置。**转换逻辑与输出文件未变**，14 组机型自检仍与 v2.6 参考值
+  逐字节相同。
 - **v2.6**：把「四季色彩」卡片从彩色圆点改为四张 24px 季节图标
   （春红=樱花、夏至=雪山、九秋=红叶、冬日=枯枝雪景），图标随打包版一起
   进入资源目录；单张图标缺失时该行自动回退为原来的圆点。版本号推进到
@@ -136,6 +140,29 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
   并用 K-30 色彩空间校准 KF 四季矩阵。K-30 自动识别。
 - **v1.5**：内置 KF 四季参数，K-70 自动识别。
 - **v1.4**：内置 KF 数据；KF / K-70 按“基础矩阵相同”精确移植。
+
+### v2.7 打包记录（2026-10-30）
+
+构建：Python 3.14.3 + PyInstaller 6.22.3，`PDCU-Season-Params.spec`（onefile），
+FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.7.0.0**。
+文件选择器加入 DNG 内嵌 JPEG 实时预览；预览使用 Pillow 12.1.1，spec 排除 numpy
+以控制体积。四张季节 PNG 仍从 onefile 的 `assets` 资源目录读取。
+
+| 产物 | 大小 |
+|---|---:|
+| `dist/PDCU-Season-Params.exe` | 19,368,357 B |
+| `dist/PDCU-Season-ParamsV2.7.zip`（exe + 使用说明） | 19,114,611 B |
+
+打包后 exe 的 14 组机型自检全部通过，与 v2.6 记录逐字节相同；转换逻辑与输出
+文件未改变。冻结版已在空目录启动，选择 `sample/645D.DNG` 后右侧正常显示
+640 × 480 预览，确认 Pillow 与 DNG 预览数据已打进 onefile。
+
+SHA-256：
+
+```
+exe    B94995794CDF87FE1F36358A5F55CBE93F7ACADB8D4A4C5DFFA14F022BD5572C
+zip    32C69E3107F0DEA4F0A3145D8EDECC895C2D18F41865D8B0A4FCC803228084DD
+```
 
 ### v2.6 打包记录（2026-10-30）
 

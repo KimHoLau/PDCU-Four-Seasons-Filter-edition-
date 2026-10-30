@@ -10,6 +10,7 @@ from __future__ import annotations
 
 __copyright__ = "Copyright © 2026 KimHoLau X deepseek harness"
 
+import io
 import os
 import queue
 import sys
@@ -22,10 +23,16 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 
+try:
+    from PIL import Image, ImageTk
+except Exception:  # Pillow is optional in a source checkout.
+    Image = None
+    ImageTk = None
+
 import dng_season_params as core
 
 APP_TITLE = "PDCU MOD"
-APP_VERSION = "2.6"
+APP_VERSION = "2.7"
 APP_INTRO = ("PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具"
              "(春红HARUBENI、夏至KATEN、九秋KYUSHU、冬日FUYUNO)")
 COPYRIGHT = "版权所有 © 2026 KimHoLau X deepseek harness"
@@ -456,6 +463,11 @@ class FileChooserDialog(tk.Toplevel):
         self._entries = []
         self._current = ""
         self._drag = (0, 0)
+        self._preview_queue = queue.Queue()
+        self._preview_seq = 0
+        self._preview_photo = None
+        self._preview_busy = False
+        self._preview_pending = None
 
         head = tk.Frame(self, bg=PANEL)
         head.pack(fill="x")
@@ -502,8 +514,12 @@ class FileChooserDialog(tk.Toplevel):
                             height=26, padx=10, font=(FONT, 8), bg=BG
                             ).pack(side="left", padx=(6, 0))
 
-        list_wrap = tk.Frame(body, bg=BG)
-        list_wrap.pack(fill="both", expand=True)
+        content = tk.Frame(body, bg=BG)
+        content.pack(fill="both", expand=True)
+        content.rowconfigure(0, weight=1)
+        content.columnconfigure(0, weight=1)
+        list_wrap = tk.Frame(content, bg=BG)
+        list_wrap.grid(row=0, column=0, sticky="nsew")
         list_wrap.rowconfigure(0, weight=1)
         list_wrap.columnconfigure(0, weight=1)
         self.listbox = tk.Listbox(
@@ -521,7 +537,20 @@ class FileChooserDialog(tk.Toplevel):
         self.listbox.configure(yscrollcommand=scroll.set)
         self.listbox.bind("<Double-Button-1>", self._on_double)
         self.listbox.bind("<Return>", self._on_double)
-        self.listbox.bind("<<ListboxSelect>>", lambda _e: self._update_hint())
+        self.listbox.bind("<<ListboxSelect>>", self._on_select)
+
+        preview = tk.Frame(content, bg=PANEL, width=276,
+                           highlightthickness=1, highlightbackground=BORDER)
+        preview.grid(row=0, column=1, sticky="ns", padx=(10, 0))
+        preview.grid_propagate(False)
+        self.preview_label = tk.Label(
+            preview, text="选择 DNG 查看预览", bg=PANEL, fg=TEXT_MUTE,
+            font=(FONT, 9), justify="center")
+        self.preview_label.pack(fill="both", expand=True, padx=8, pady=8)
+        self.preview_info = tk.Label(
+            preview, text="", bg=PANEL, fg=TEXT_MUTE, font=(FONT, 8),
+            anchor="w", justify="left")
+        self.preview_info.pack(fill="x", padx=8, pady=(0, 8))
 
         self.error = tk.Label(body, text="", bg=BG, fg="#e05a5a",
                               font=(FONT, 8), anchor="w")
@@ -548,7 +577,7 @@ class FileChooserDialog(tk.Toplevel):
 
         self.transient(parent)
         self.update_idletasks()
-        w, h = 780, 560
+        w, h = 900, 600
         px, py = parent.winfo_rootx(), parent.winfo_rooty()
         pw, ph = parent.winfo_width(), parent.winfo_height()
         x = px + max(0, (pw - w) // 2)
@@ -559,6 +588,7 @@ class FileChooserDialog(tk.Toplevel):
         self.focus_force()
         self.grab_set()
         self.after(20, self.path_entry.focus_set)
+        self.after(80, self._poll_preview)
 
     # ---------- window ----------
     def _drag_start(self, event):
@@ -614,6 +644,7 @@ class FileChooserDialog(tk.Toplevel):
         self.listbox.delete(0, "end")
         for drive, _path, _is_dir in self._entries:
             self.listbox.insert("end", drive)
+        self._clear_preview()
         self._clear_error()
         self._update_hint()
 
@@ -646,6 +677,7 @@ class FileChooserDialog(tk.Toplevel):
         self.listbox.delete(0, "end")
         for name, _full, is_dir in items:
             self.listbox.insert("end", name + (os.sep if is_dir else ""))
+        self._clear_preview()
         self._clear_error()
         self._update_hint()
         return True
@@ -715,6 +747,95 @@ class FileChooserDialog(tk.Toplevel):
         self.listbox.selection_set(index)
         self.listbox.activate(index)
         self._accept()
+
+    # ---------- preview ----------
+    def _on_select(self, _event=None):
+        self._update_hint()
+        self._queue_preview()
+
+    def _clear_preview(self, text="选择 DNG 查看预览"):
+        self._preview_seq += 1
+        self._preview_pending = None
+        self._preview_photo = None
+        self.preview_label.configure(image="", text=text)
+        self.preview_info.configure(text="")
+
+    def _queue_preview(self):
+        selected = self.listbox.curselection()
+        path = None
+        for index in selected:
+            _name, full, is_dir = self._entries[index]
+            if not is_dir:
+                path = full
+                break
+        if path is None:
+            self._clear_preview()
+            return
+        if Image is None:
+            self._clear_preview("预览需要 Pillow")
+            return
+        self._preview_seq += 1
+        seq = self._preview_seq
+        self._preview_photo = None
+        self.preview_label.configure(image="", text="正在加载预览…")
+        self.preview_info.configure(text=os.path.basename(path))
+        self._preview_pending = (seq, path)
+        self._start_preview()
+
+    def _start_preview(self):
+        if self._preview_busy or self._preview_pending is None:
+            return
+        seq, path = self._preview_pending
+        self._preview_pending = None
+        self._preview_busy = True
+        threading.Thread(target=self._load_preview, args=(seq, path),
+                         daemon=True).start()
+
+    def _load_preview(self, seq, path):
+        try:
+            dng = core.Dng(path)
+            raw = dng.preview_jpeg()
+            if raw:
+                image = Image.open(io.BytesIO(raw))
+            else:
+                image = Image.open(path)
+            image.load()
+            original_w, original_h = image.size
+            image.thumbnail((248, 190), Image.LANCZOS)
+            if image.mode not in ("RGB", "RGBA"):
+                image = image.convert("RGB")
+            self._preview_queue.put(
+                (seq, image, dng.model, original_w, original_h, ""))
+        except Exception as exc:
+            self._preview_queue.put((seq, None, "", 0, 0, str(exc)))
+
+    def _poll_preview(self):
+        if not self.winfo_exists():
+            return
+        try:
+            while True:
+                seq, image, model, width, height, error = (
+                    self._preview_queue.get_nowait())
+                self._preview_busy = False
+                if seq != self._preview_seq:
+                    continue
+                if image is not None:
+                    self._preview_photo = ImageTk.PhotoImage(image)
+                    self.preview_label.configure(image=self._preview_photo,
+                                                 text="")
+                    self.preview_info.configure(
+                        text="%s\n%d × %d"
+                        % (model or os.path.basename(self._current), width, height))
+                else:
+                    self._preview_photo = None
+                    self.preview_label.configure(image="",
+                                                 text="无法读取预览")
+                    self.preview_info.configure(text=error[:120])
+        except queue.Empty:
+            pass
+        if self._preview_pending is not None:
+            self._start_preview()
+        self.after(80, self._poll_preview)
 
     def _accept(self):
         if self._mode == "dir":
