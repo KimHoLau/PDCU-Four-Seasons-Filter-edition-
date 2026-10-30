@@ -37,7 +37,7 @@ CM2 = (0.880447, -0.252304, -0.123764,
 
 # KF season records in the MX-1 byte order, with param 128 (the 0x021B
 # matrix index) renumbered to this bundle's 0..3.
-RECORDS = Q7_MX1_RECORDS
+RECORDS = dict(Q7_MX1_RECORDS)
 
 # M(KF season) * Y, quantised to Q13 in the MX-1's little-endian byte order.
 MATRICES = {

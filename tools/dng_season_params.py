@@ -106,18 +106,9 @@ COMPATIBLE_MODEL_PAIRS = {
     frozenset(("PENTAX KF", "PENTAX K-70")),
 }
 
-# K-30 / K-01 / K-50 / Q7 have no 0x021A/0x021B in their private blocks at
-# all.  Their bundled season bundles are calibrated from each body's own DNG
-# ColorMatrix2 (T = diag(1/(CM2*W))*CM2, Y = T(KF)*inv(T(body))); the tool
-# does not recalibrate them at run time because there is no 0x021B base to
-# read.  K-30 ends up on the same quantised base as the K-3.
-NO_TABLE_MODELS = {"PENTAX K-30", "PENTAX K-01", "PENTAX K-50",
-                   "PENTAX Q7", "PENTAX MX-1"}
-
 # One registry for every model -> built-in donor decision.  The GUI's source
 # rows, its automatic selection, the worker and the hidden selftest entry all
 # read this table instead of keeping their own if/elif ladders.
-BUILTIN_SOURCE_MODELS = {}
 MODEL_TO_DONOR_KIND = {
     "PENTAX K-1": "k1",
     "PENTAX K-1 Mark II": "k1ii",
@@ -140,12 +131,13 @@ MODEL_TO_DONOR_KIND = {
 
 
 class BuiltinSource:
-    """A GUI source row: label plus the donor kinds it can serve."""
+    """A GUI source row: label, donor kinds, and exact GUI log line."""
 
-    def __init__(self, key, label, kinds):
+    def __init__(self, key, label, kinds, log_text):
         self.key = key
         self.label = label
         self.kinds = tuple(kinds)
+        self.log_text = log_text
 
     def __repr__(self):
         return "BuiltinSource(%r, %r)" % (self.key, self.label)
@@ -154,21 +146,40 @@ class BuiltinSource:
 CUSTOM_DONOR_MODE = "file"
 
 BUILTIN_SOURCES = {
-    "builtin": BuiltinSource("builtin", "内置 K-1 / K-1 Mark II", ("k1", "k1ii")),
-    "builtin_kf": BuiltinSource("builtin_kf", "内置 KF / K-70", ("kf",)),
-    "builtin_645d": BuiltinSource("builtin_645d", "内置 645D", ("645d",)),
-    "builtin_k30": BuiltinSource("builtin_k30", "内置 K-30 系列",
-                                 ("k30", "k01", "k50", "q7", "mx1")),
+    "builtin": BuiltinSource(
+        "builtin", "内置 K-1 / K-1 Mark II", ("k1", "k1ii"),
+        "季节来源：内置 K-1 / K-1 Mark II 四季参数"),
+    "builtin_kf": BuiltinSource(
+        "builtin_kf", "内置 KF / K-70", ("kf",),
+        "季节来源：内置 KF / K-70 四季参数"),
+    "builtin_645d": BuiltinSource(
+        "builtin_645d", "内置 645D", ("645d",),
+        "季节来源：内置 645D 四季参数"),
+    "builtin_k30": BuiltinSource(
+        "builtin_k30", "内置 K-30 系列", ("k30", "k01", "k50", "q7", "mx1"),
+        "季节来源：内置 K-30 系列四季参数"),
 }
-KIND_TO_SOURCE = {
-    kind: source for source in BUILTIN_SOURCES.values() for kind in source.kinds
-}
-for _source in BUILTIN_SOURCES.values():
-    BUILTIN_SOURCE_MODELS[_source.key] = frozenset(
+BUILTIN_SOURCE_MODELS = {
+    source.key: frozenset(
         model for model, kind in MODEL_TO_DONOR_KIND.items()
-        if kind in _source.kinds
+        if kind in source.kinds
     )
-del _source
+    for source in BUILTIN_SOURCES.values()
+}
+
+# Automatic selection keeps the old family boundaries: a batch that mixes KF
+# with a calibrated K-3 body is deliberately left to the user instead of being
+# silently collapsed into the wider "KF / K-70" source.
+AUTO_SELECT_GROUPS = (
+    ("builtin", frozenset(("PENTAX K-1", "PENTAX K-1 Mark II"))),
+    ("builtin_kf", frozenset(("PENTAX KF", "PENTAX K-70"))),
+    ("builtin_k30", frozenset(("PENTAX K-30", "PENTAX K-01", "PENTAX K-50",
+                               "PENTAX Q7", "PENTAX MX-1"))),
+    ("builtin_645d", frozenset(("PENTAX 645D",))),
+    ("builtin_kf", frozenset(("PENTAX K-3", "PENTAX K-3 II", "PENTAX K-5 II",
+                              "PENTAX K-5 II s", "PENTAX 645Z", "PENTAX KP",
+                              "PENTAX K-S2"))),
+)
 
 # Hidden build-test switches.  --selftest-cross is the K-1 donor with the
 # cross-model opt-in and is not a donor selector itself.
@@ -191,9 +202,19 @@ def donor_kind_for_model(model):
     return MODEL_TO_DONOR_KIND.get((model or "").strip())
 
 
-def source_for_model(model):
-    """The GUI source row that handles this body, or None when unknown."""
-    return KIND_TO_SOURCE.get(donor_kind_for_model(model))
+def source_for_models(models):
+    """The one source that can auto-serve a whole batch, or None.
+
+    Mixed families (for example KF + K-3) intentionally return None: the old
+    GUI asked the user to split the batch, and that choice is preserved.
+    """
+    models = frozenset((model or "").strip() for model in models)
+    if not models or "" in models:
+        return None
+    for source_key, group in AUTO_SELECT_GROUPS:
+        if models <= group:
+            return BUILTIN_SOURCES[source_key]
+    return None
 
 
 def builtin_source_allows(source, model):

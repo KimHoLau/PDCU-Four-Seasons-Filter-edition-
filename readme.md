@@ -145,8 +145,8 @@ FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.6.
 
 | 产物 | 大小 |
 |---|---:|
-| `dist/PDCU-Season-Params.exe` | 12,901,767 B |
-| `dist/PDCU-Season-ParamsV2.6.zip`（exe + 使用说明） | 12,655,626 B |
+| `dist/PDCU-Season-Params.exe` | 12,906,488 B |
+| `dist/PDCU-Season-ParamsV2.6.zip`（exe + 使用说明） | 12,661,149 B |
 
 打包后 exe 的 14 组机型自检全部通过，且与 v2.5 参考值逐字节相同；转换逻辑与
 输出文件均未改变：
@@ -174,8 +174,8 @@ FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.6.
 SHA-256：
 
 ```
-exe    08E756555B2D4BB77B409CAAC050318936355FDE38E1501C78607CC551790E3E
-zip    7015AD7E09303F245D51118AD6DDB47DA44B3EFE683749E86436208E4B5CB6C9
+exe    A25F4A64802C56DDEF298F1354548A08404EB9A696742866E82E96065D842BEC
+zip    7DA4885ECBE2A1AFFA2803C2F0BC0BA543F3755D3D05C3DE110417AACF0610D0
 ```
 
 ### v2.5 打包记录（2026-10-30）

@@ -1182,18 +1182,14 @@ class App(tk.Tk):
             return
         if self.donor_mode.get() not in core.BUILTIN_SOURCES:
             return
-        sources = {core.source_for_model(model) for model in models}
-        if None in sources:
+        source = core.source_for_models(models)
+        if source is None:
             if len(models) > 1:
                 self.status_var.set("检测到多种机型，请分批处理或使用 DNG 来源")
             else:
                 model = next(iter(models))
                 self.status_var.set("检测到 %s，请选择来源或使用 DNG 文件" % model)
             return
-        if len(sources) > 1:
-            self.status_var.set("检测到多种机型，请分批处理或使用 DNG 来源")
-            return
-        source = next(iter(sources))
         self.donor_mode.set(source.key)
         self._donor_mode_changed()
         self.status_var.set("检测到 %s，已选择「%s」"
@@ -1345,7 +1341,7 @@ class App(tk.Tk):
             if source is not None:
                 donors = {kind: core.builtin_donor(kind)
                           for kind in source.kinds}
-                self.queue.put(("log", "季节来源：%s四季参数" % source.label))
+                self.queue.put(("log", source.log_text))
             else:
                 donors[core.CUSTOM_DONOR_MODE] = core.Dng(donor_path)
                 self.queue.put(("log", "季节来源：%s" % donor_path))

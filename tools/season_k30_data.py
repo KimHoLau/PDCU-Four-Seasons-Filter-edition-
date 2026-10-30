@@ -22,7 +22,7 @@ PRIV_ENDIAN = '>'
 # stay on the K-3 calibration line to the last LSB.
 BASE_MATRIX = (12512, -4352, 32, -1728, 12832, -2912, 288, -3392, 11296)
 
-RECORDS = K30_SERIES_RECORDS
+RECORDS = dict(K30_SERIES_RECORDS)
 
 MATRICES = {
     0: bytes.fromhex('346ff675f51cf32b40eaebebf74d084a2069'),
