@@ -244,33 +244,8 @@ PDCU 立刻变成 KYUSHU：雷达图斜四边形、红色/暖色表现出现。
 
 ---
 
-## 9. 供体移植工具
+## 9. 供体移植（已归档）
 
-`tools/kyushu_transplant.py`：把机内 KYUSHU 供体 DNG 私有块的前 15,031 字节
-（`DNGPrivateData` +0x0000..+0x3AB7）写进目标 DNG。
-
-```powershell
-# 只检查标记
-python tools/kyushu_transplant.py --donor sample\IMGP1157.DNG --target sample\IMGP1194.DNG --verify-only
-
-# 生成
-python tools/kyushu_transplant.py --donor sample\IMGP1157.DNG --target sample\IMGP1194.DNG --out out.dng
-```
-
-- 供体校验：`0x0014=21 (0x15)`、`0x0016=50 (0x32)`、`0x0200/0x024c=1024`；
-- 输出在 PDCU 中显示 KYUSHU（斜四边形）；
-- **供体与目标必须同一机型**；跨机型会直接拒绝（KYUSHU 参数是机型相关的）；
-- K-3 III：固定 15,031 字节（已实测）；
-- 其他机型（K-1/K-1 II/KF 等）：按 `0x021f 偏移 + 0x733` 估算，需 `--allow-untested`，
-  并在 PDCU 里验证；必要时用 `--len` 指定实测长度；
-- 不改输入；
-- 近似：会带入供体的影调/白平衡（可能偏暖），建议选光线接近的供体并在 PDCU 里再校正。
-
-实测命令与校验：
-
-```text
-donor  markers: 0x0014=21  0x0016=50  0x0200=[1024,1024,1024,1024]  0x024c=[1024,1024,1024,1024]
-target markers: 0x0014=12  0x0016=40  0x0200=[256,256,256,256]  0x024c=[256,256,256,256]
-wrote 15031 bytes (private block +0x0000..+0x3AB7)
-输出：未改动的头部/像素 + 供体的 KYUSHU 参数
-```
+早期版本曾附带一个把同机型 KYUSHU 供体 DNG 的私有块移植到目标 DNG 的实验辅助工具。
+该工具已从本仓库移除，本节不再提供命令或源码；上面的测量结论只用于解释 `0x021f`
+与场景、白平衡、镜头的相关性。
