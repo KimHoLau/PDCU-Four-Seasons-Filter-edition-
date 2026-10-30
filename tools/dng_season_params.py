@@ -139,6 +139,12 @@ class BuiltinSource:
         self.kinds = tuple(kinds)
         self.log_text = log_text
 
+    @property
+    def models(self):
+        """Compatible model names in the registry's stable order."""
+        return tuple(model for model, kind in MODEL_TO_DONOR_KIND.items()
+                     if kind in self.kinds)
+
     def __repr__(self):
         return "BuiltinSource(%r, %r)" % (self.key, self.label)
 

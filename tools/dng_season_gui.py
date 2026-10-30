@@ -220,11 +220,87 @@ class DarkEntry(tk.Entry):
         super().__init__(master, **kw)
 
 
+class HoverTip:
+    """Small dark tooltip that appears after hovering a row."""
+
+    def __init__(self, owner, text, widgets):
+        self._owner = owner
+        self._text = text
+        self._tip = None
+        self._show_job = None
+        self._hide_job = None
+        for widget in widgets:
+            widget.bind("<Enter>", self._enter, add="+")
+            widget.bind("<Leave>", self._leave, add="+")
+            widget.bind("<ButtonPress-1>", self._click, add="+")
+
+    def _enter(self, _event=None):
+        self._cancel_hide()
+        if self._tip is not None or self._show_job is not None:
+            return
+        self._show_job = self._owner.after(350, self._show)
+
+    def _leave(self, _event=None):
+        self._cancel_show()
+        if self._tip is not None and self._hide_job is None:
+            self._hide_job = self._owner.after(80, self._hide)
+
+    def _click(self, _event=None):
+        self._cancel_show()
+        self._hide()
+
+    def _show(self):
+        self._show_job = None
+        if self._tip is not None or not self._owner.winfo_exists():
+            return
+        window = tk.Toplevel(self._owner)
+        window.withdraw()
+        window.overrideredirect(True)
+        window.configure(bg=BORDER)
+        frame = tk.Frame(window, bg=PANEL)
+        frame.pack(padx=1, pady=1)
+        tk.Label(frame, text=self._text, bg=PANEL, fg=TEXT_DIM,
+                 font=(FONT, 8), justify="left", wraplength=340,
+                 padx=10, pady=7).pack()
+        window.update_idletasks()
+        x = self._owner.winfo_rootx()
+        y = self._owner.winfo_rooty() + self._owner.winfo_height() + 4
+        width, height = window.winfo_reqwidth(), window.winfo_reqheight()
+        x = min(max(4, x), window.winfo_screenwidth() - width - 4)
+        y = min(max(4, y), window.winfo_screenheight() - height - 4)
+        window.geometry("+%d+%d" % (x, y))
+        window.deiconify()
+        self._tip = window
+
+    def _hide(self):
+        self._hide_job = None
+        self._show_job = None
+        if self._tip is not None:
+            self._tip.destroy()
+            self._tip = None
+
+    def _cancel_show(self):
+        if self._show_job is not None:
+            try:
+                self._owner.after_cancel(self._show_job)
+            except tk.TclError:
+                pass
+            self._show_job = None
+
+    def _cancel_hide(self):
+        if self._hide_job is not None:
+            try:
+                self._owner.after_cancel(self._hide_job)
+            except tk.TclError:
+                pass
+            self._hide_job = None
+
+
 class OptionRow(tk.Frame):
     """Radio-style selectable card."""
 
     def __init__(self, master, title, subtitle="", *, value, variable,
-                 command=None):
+                 command=None, tooltip=""):
         super().__init__(master, bg=ROW_BG, highlightthickness=1,
                          highlightbackground=BORDER_SOFT, cursor="hand2",
                          takefocus=1)
@@ -261,6 +337,8 @@ class OptionRow(tk.Frame):
         self.bind("<space>", self._click)
         self._var.trace_add("write", lambda *_a: self._sync())
         self._sync()
+        self._tooltip = (HoverTip(self, tooltip, self._parts)
+                         if tooltip else None)
 
     def _click(self, _event=None):
         self._var.set(self._value)
@@ -1162,9 +1240,10 @@ class App(tk.Tk):
 
         self.donor_mode = tk.StringVar(value="builtin")
         for index, source in enumerate(core.BUILTIN_SOURCES.values()):
+            tip = "适配机型：\n" + "、".join(source.models)
             OptionRow(card.body, source.label, value=source.key,
                       variable=self.donor_mode,
-                      command=self._donor_mode_changed
+                      command=self._donor_mode_changed, tooltip=tip
                       ).pack(fill="x", pady=(0 if index == 0 else 4, 0))
 
         tk.Frame(card.body, bg=BORDER_SOFT, height=1).pack(fill="x",
