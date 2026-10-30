@@ -79,6 +79,7 @@ import struct
 import sys
 import time
 
+import dng_report
 import season_645d_data
 import season_k01_data
 import season_k1_data
@@ -464,40 +465,13 @@ def calibration_allows_cross(calibration):
 
 
 def describe_cm2(cal):
-    """Base-vs-ColorMatrix2 verdict, or '' when the check was skipped."""
-    cm2 = cal.get("cm2") if cal else None
-    if not cm2:
-        return ""
-    if cm2["ok"]:
-        return "CM2 check: pass (0x021B base vs ColorMatrix2, dY %.1e)" % cm2["delta"]
-    return ("CM2 check: WARNING - the target's 0x021B base and its "
-            "ColorMatrix2 imply different Y (dY %.1e); using the 0x021B base"
-            % cm2["delta"])
+    """Backwards-compatible wrapper around the reporter."""
+    return dng_report.describe_cm2(cal)
 
 
 def describe_calibration(cal):
-    """One-line summary used by the CLI and the GUI log."""
-    if cal is None:
-        return "no calibration (donor/target has no 0x021B base matrix)"
-    if cal["identity"]:
-        return "no correction needed (same base colour matrix)"
-    if not cal["style_known"]:
-        return ("Y = %s  (style check: n/a - the donor has no mode records; "
-                "bundled data assumed to match the KF style)"
-                % _mat_text(cal["y"]))
-    text = ("Y = %s  style: median %.1e, max %.1e over %d modes"
-            % (_mat_text(cal["y"]), cal["style_median"] or 0.0,
-               cal["style_max"] or 0.0, cal["modes"]))
-    if not cal["style_ok"]:
-        text += "  [WARNING: style tables differ]"
-    return text
-
-
-def _mat_text(m):
-    rows = []
-    for row in m:
-        rows.append("[" + " ".join("%+.5f" % v for v in row) + "]")
-    return " ".join(rows)
+    """Backwards-compatible wrapper around the reporter."""
+    return dng_report.describe_calibration(cal)
 
 
 def check_cross_model(target, donor, allow_cross_model, calibration):
@@ -816,53 +790,8 @@ class Dng:
             self.priv_endian + "%dH" % self.n_params, self.table, 2))
 
     def describe(self):
-        print("file          : %s" % self.path)
-        print("size          : %d bytes" % len(self.data))
-        print("camera        : %s" % (self.model or "?"))
-        if self.unique_model and self.unique_model != self.model:
-            print("unique model  : %s" % self.unique_model)
-        label = ("private block" if self.container == "private"
-                 else "maker note")
-        print("%-13s : %s, file 0x%X..0x%X (%d bytes)"
-              % (label, ("DNGPrivateData 0xC634" if self.container == "private"
-                         else "EXIF MakerNote 0x927C"),
-                 self.priv_off, self.priv_end, self.priv_len))
-        if self.table_len:
-            print("tag 0x021A    : file 0x%X..0x%X (%d bytes)"
-                  % (self.table_off, self.table_off + self.table_len, self.table_len))
-            print("table         : nParams=%d nRecords=%d recordSize=%d"
-                  % (self.n_params, self.n_records, self.rec_size))
-        else:
-            print("tag 0x021A    : absent")
-            print("table         : nParams=%d (default) nRecords=0" % self.n_params)
-        if self.table_padding:
-            print("table padding : %d bytes after records (reserved, ignored)"
-                  % self.table_padding)
-        if self.blocks_len:
-            print("tag 0x021B    : file 0x%X..0x%X (%d bytes), matrices=%d x %d B"
-                  % (self.blocks_off, self.blocks_off + self.blocks_len,
-                     self.blocks_len, self.block_count, self.block_size))
-        else:
-            print("tag 0x021B    : absent")
-        print("mode ids      : %s" % ",".join(str(i) for i in self.ids))
-        if self.seasons:
-            print("season records: %s" % ", ".join(
-                "%d/%s" % (i, SEASON_NAMES[i]) for i in self.seasons))
-            print("season matrices: %s" % ", ".join(
-                "%d/%s->#%d" % (i, SEASON_NAMES[i],
-                                self.record_block_index(self.record(i)))
-                for i in self.seasons))
-        else:
-            print("season records: none")
-        if self.missing:
-            print("missing       : %s" % ", ".join(
-                "%d/%s" % (i, SEASON_NAMES[i]) for i in self.missing))
-        else:
-            print("missing       : none")
-        if self.has_mode_table and self.n_params < 12:
-            print("layout note   : this body writes an %d-parameter 0x021A table; "
-                  "PDCU 5.10.2.2 only lists the four seasons in the 12-parameter "
-                  "layout, so the tool rebuilds it" % self.n_params)
+        """Return the inspection report; never writes to stdout."""
+        return dng_report.describe_dng(self, SEASON_NAMES)
 
     def next_used_start(self, tag):
         """First private-block data range that starts at/after the given tag."""
@@ -1684,8 +1613,7 @@ def convert_file(target_path, out_path, donor, *, overwrite=False, force=False,
 
 def patch(args):
     target = Dng(args.target)
-    print("== target ==")
-    target.describe()
+    print("\n".join(dng_report.target_report(target, SEASON_NAMES)))
     print()
 
     if args.list:
@@ -1693,28 +1621,24 @@ def patch(args):
     builtin = getattr(args, "builtin", None)
     if args.verify_only:
         if builtin:
-            print("== donor ==")
-            print("built-in %s season data" % builtin)
+            print("\n".join(dng_report.builtin_donor_report(builtin)))
         elif args.donor:
-            print("== donor ==")
-            Dng(args.donor).describe()
+            print("\n".join(dng_report.donor_report(Dng(args.donor),
+                                                     SEASON_NAMES)))
         return 0
 
     missing = target.missing
     if not missing:
-        print("Nothing to do: all four season records are already present.")
+        print("\n".join(dng_report.nothing_to_do_report()))
         return 0
 
     if builtin:
         donor = builtin_donor(builtin)
-        print("== donor ==")
-        print("built-in %s season data (model %s, endian %s)"
-              % (builtin, donor.model, donor.priv_endian))
+        print("\n".join(dng_report.builtin_donor_report(builtin, donor)))
         print()
     elif args.donor:
         donor = Dng(args.donor)
-        print("== donor ==")
-        donor.describe()
+        print("\n".join(dng_report.donor_report(donor, SEASON_NAMES)))
         print()
     else:
         raise DngError("--donor or --builtin is required when records are missing")
@@ -1728,103 +1652,22 @@ def patch(args):
         target, donor, args.allow_cross_model, calibration)
     if mismatch:
         raise DngError(mismatch + " (use --allow-cross-model to override)")
-    msg = None
-    if target.model and donor.model and target.model != donor.model:
-        msg = "camera model mismatch: target %r, donor %r" % (target.model, donor.model)
-        if compatible_cross:
-            print("NOTE:", msg)
-            print("      KF / K-70 share the same 21 base color matrices; "
-                  "this transplant is exact.")
-        elif calibrated_cross:
-            print("NOTE:", msg)
-            print("      same style table (checked below); transplant is "
-                  "calibrated into the target's colour space.")
-        else:
-            print("WARNING:", msg)
-    if target.unique_model and donor.unique_model and target.unique_model != donor.unique_model:
-        if compatible_cross or calibrated_cross:
-            print("NOTE: UniqueCameraModel differs: %r vs %r"
-                  % (target.unique_model, donor.unique_model))
-        else:
-            print("WARNING: UniqueCameraModel mismatch: %r vs %r"
-                  % (target.unique_model, donor.unique_model))
-
-    print("== calibration ==")
-    print("target base    : %s" % ("" if calibration is None else
-                                   _mat_text(calibration["target_base"])))
-    print("donor base     : %s" % ("" if calibration is None else
-                                   _mat_text(calibration["donor_base"])))
-    print("result         : %s" % describe_calibration(calibration))
-    if calibration is not None and calibration["style_ok"]:
-        print("style check    : pass (%d common modes, median %.1e)"
-              % (calibration["modes"], calibration["style_median"]))
-    elif calibration is not None and not calibration["style_known"]:
-        print("style check    : n/a (donor has no mode records; bundled data "
-              "assumed to match the KF style)")
-    elif calibration is not None:
-        print("style check    : WARNING - the two tables do not look like the "
-              "same style (median %.1e)"
-              % (calibration["style_median"] or 0.0))
-    if calibration is not None:
-        cm2_text = describe_cm2(calibration)
-        if cm2_text:
-            print("CM2 check      : %s" % cm2_text.split(": ", 1)[1])
+    print("\n".join(dng_report.calibration_report(
+        target, donor, compatible_cross, calibrated_cross, calibration)))
     print()
 
     plan = plan_patch(target, donor, missing, xform)
     warning = check_plan_fills(plan, args.force)
 
-    print("== plan ==")
-    print("insert modes   : %s" % ", ".join(
-        "%d/%s" % (i, SEASON_NAMES[i]) for i in missing))
-    if plan.get("kind") == "add_tags":
-        print("mode table     : absent -> %d B, nRecords 0 -> %d (new tag)"
-              % (len(plan["new_table"]), plan["nrec"]))
-        print("matrix table   : absent -> %d B, matrices 0 -> %d (new tag)"
-              % (plan["new_blocks_len"], plan["new_block_count"]))
-        print("tag data       : 0x021A at 0x%X, 0x021B at 0x%X"
-              % (plan["table_off"], plan["blocks_off"]))
-        for tag, (rel, raw) in sorted(plan["relocated"].items()):
-            print("relocate       : tag 0x%04X -> private +0x%X (%d B)"
-                  % (tag, rel, len(raw)))
-    else:
-        print("mode table     : %d -> %d B (%+d), nRecords %d -> %d"
-              % (target.table_len, len(plan["new_table"]), plan["table_growth"],
-                 target.n_records, plan["nrec"]))
-        if plan.get("layout_upgraded"):
-            print("record layout  : %d params / %d B -> %d params / %d B "
-                  "(PDCU needs the 12-parameter layout for the four seasons)"
-                  % (target.n_params, target.rec_size, plan["n_params"],
-                     plan["rec_size"]))
-        if plan["table_relocated"]:
-            print("mode move      : file 0x%X -> 0x%X "
-                  "(0x021A gap was %d B; table moved to free space)"
-                  % (target.table_off, plan["new_table_off"], plan["table_gap"]))
-        else:
-            print("mode space     : old tag end 0x%X, new table end 0x%X, "
-                  "gap after old tag %d B"
-                  % (plan["table_old_end"], plan["table_new_end"],
-                     plan["table_gap"]))
-        print("matrix table   : %d -> %d B, matrices %d -> %d"
-              % (target.blocks_len, plan["new_blocks_len"],
-                 target.block_count, plan["new_block_count"]))
-        if plan["blocks_relocated"]:
-            print("matrix move    : file 0x%X -> 0x%X "
-                  "(0x021B gap was %d B; old matrix area reused)"
-                  % (target.blocks_off, plan["new_blocks_off"], plan["blocks_gap"]))
-        else:
-            print("matrix gap     : file 0x%X..0x%X (%d bytes)"
-                  % (plan["blocks_old_end"], plan["blocks_next"], plan["blocks_gap"]))
-    for new_idx, _matrix in plan["added"]:
-        print("  + matrix #%d" % new_idx)
-    if warning:
-        print("WARNING:", warning)
+    print("\n".join(dng_report.plan_report(
+        target, plan, missing, SEASON_NAMES, warning)))
 
     if args.dry_run:
-        print("dry run: no file written")
+        print(dng_report.dry_run_report())
         return 0
 
     out_path = args.out
+    backup = None
     if args.in_place:
         out_path = args.target
         if not args.no_backup:
@@ -1832,7 +1675,6 @@ def patch(args):
             if os.path.exists(backup):
                 backup = args.target + ".%s.bak" % time.strftime("%Y%m%d-%H%M%S")
             shutil.copy2(args.target, backup)
-            print("backup         : %s" % backup)
     elif not out_path:
         raise DngError("--out is required (or use --in-place)")
     if os.path.exists(out_path) and not (args.overwrite or args.in_place):
@@ -1844,12 +1686,12 @@ def patch(args):
     with open(tmp, "wb") as f:
         f.write(out)
     os.replace(tmp, out_path)
-    print("wrote          : %s (%d bytes)" % (out_path, len(out)))
+    print("\n".join(dng_report.written_report(
+        out_path, len(out), backup)))
     print()
 
     check = verify_output(out_path, plan)
-    print("== verify ==")
-    check.describe()
+    mismatches = []
     for sid in check.seasons:
         rec = check.record(sid)
         idx = check.record_block_index(rec)
@@ -1867,15 +1709,11 @@ def patch(args):
                     _mat_mul(_mat_decode(donor.blocks[didx], donor.priv_endian),
                              xform), check.priv_endian)
             if check.blocks[idx] != expected:
-                print("WARNING: existing %s matrix #%d was not written by this run"
-                      % (SEASON_NAMES[sid], idx))
+                mismatches.append((sid, idx))
+    print("\n".join(dng_report.verify_report(
+        check, SEASON_NAMES, mismatches)))
     print()
-    print("OK: all four season records are present, and each points to a "
-          "3x3 color matrix.")
-    print("PDCU should now list HARUBENI, KATEN, KYUSHU and FUYUNO, and use "
-          "the donor's season color matrices.")
-    print("Note: per-image data such as 0x021F is not changed; the radar "
-          "shape also depends on the target image itself.")
+    print("\n".join(dng_report.completion_report()))
     return 0
 
 def main(argv=None):
