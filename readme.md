@@ -1,4 +1,7 @@
 # PDCU MOD 工具
+
+PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HARUBENI、夏至KATEN、九秋KYUSHU、冬日FUYUNO)
+
 ![image](PDCU_Mod_Preview.png)
 ![image](PDCU-GUI.png)
 
@@ -55,12 +58,18 @@
 
 ## 运行
 
-发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.4.zip`）
+发布文件：`dist/PDCU-Season-Params.exe`（或 `dist/PDCU-Season-ParamsV2.5.zip`）
 
 双击运行，首次运行 Windows SmartScreen 可能提示
 “未知发布者”，选择“更多信息 -> 仍要运行”。
 
 ## 版本
+- **v2.5**：界面改为 Lightroom 暗黑风格：近黑画布、深色卡片、蓝色强调色、
+  圆角控件与深色对话框；工具更名为 **PDCU MOD**，标题区加入 logo 和新的
+  功能说明。「季节参数来源」精简为四个内置选项（K-1 / K-1 Mark II、
+  KF / K-70、645D、K-30 系列），不再显示技术说明；自定义 DNG 来源收进
+  「高级」。转换逻辑与输出文件不变：14 组机型自检全部通过，与 v2.4 记录的
+  8 个参考 SHA-256 逐字节相同；其余机型的 exe 输出也与源码 CLI 输出一致。
 - **v2.4**：新增 **PENTAX K-1 Mark II**。K-1 Mark II 的 28 条 `0x021A` 模式记录、
   21 个 `0x021B` 基础矩阵与 K-1 **逐字节相同**，所以直接复用 K-1 原生四季表
   （Y=I），四季矩阵与 K-1 逐字节一致，相对风格残差为 0；与 KF 原生的差仍只有
@@ -114,6 +123,39 @@
   并用 K-30 色彩空间校准 KF 四季矩阵。K-30 自动识别。
 - **v1.5**：内置 KF 四季参数，K-70 自动识别。
 - **v1.4**：内置 KF 数据；KF / K-70 按“基础矩阵相同”精确移植。
+
+### v2.5 打包记录（2026-10-30）
+
+构建：Python 3.14.3 + PyInstaller 6.22.3，`PDCU-Season-Params.spec`（onefile），
+FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.5.0.0**。
+
+| 产物 | 大小 |
+|---|---:|
+| `dist/PDCU-Season-Params.exe` | 12,892,397 B |
+| `dist/PDCU-Season-ParamsV2.5.zip`（exe + 使用说明） | 12,643,922 B |
+
+打包后 exe 的自检（`--selftest-*`），14 组机型自检全部通过，且与源码 CLI 输出逐字节相同：
+
+| 机型 | 自检参数 | 自检输出 SHA-256 |
+|---|---|---:|
+| K-1 Mark II | `--selftest-k1ii` | `33FCCDF4D3DC42B0ED242673C9F0A7DCDABB5A07F247D86287B0058696971493` |
+| K-1 | `--selftest` | `5F0B52CC1D116EAA48224C1A38722EBE6823ABADA3BDD7ED7F533C275E987584` |
+| KP | `--selftest-kf` | `3BF7F56E17F2CDB83847E9C236B32F28F79E3A2CBC3C05330B83810601A91E22` |
+| 645D | `--selftest-645d` | `E9497DE8099EB53401922103DC46144640EFE416080AE85B36AA40CD07AEBE62` |
+| K-30 | `--selftest-k30` | `328E52A671C26AA5E8524003E51F78A2F55475AA9665E4C6EECA5EB648A25AEC` |
+| K-01 | `--selftest-k01` | `06B87D743391237AC54EDC847CA8FA97982EDF87BC568F3311E5415B813B3745` |
+| 645Z | `--selftest-kf` | `768EC1AAE05BD5E84AD374B7122DE711273054C8DE379BF1ECB89B4346988135` |
+| MX-1 | `--selftest-mx1` | `6CCF0D6238B28CEDF2DB040552A5802A204A4A4BD62BDD3F3188B50C3CE9448F` |
+
+前四项与 v2.4、后四项与 v2.3 / v2.2 记录逐字节相同；K-50 / Q7 / K-3 / K-3 II /
+K-S2 / K-70 也全部通过，并与源码 CLI 输出逐字节一致。
+
+SHA-256：
+
+```
+exe     841FB3B42E207EED8DF4196C94FA9039308BD5AAEEC465B46541DF73265F96B3
+zip     E7346E5B58908E07366AC6EEF45B3CEB7C1D59ECBDEEF4385896592715470B4E
+```
 
 ### v2.4 打包记录（2026-10-29）
 
@@ -247,10 +289,10 @@ KP      3BF7F56E17F2CDB83847E9C236B32F28F79E3A2CBC3C05330B83810601A91E22
 |---|---|---|
 | **PENTAX K-1** | 内置 K-1 四季参数 | 原有支持；兼容老固件带填充的 `0x021A` |
 | **PENTAX K-1 Mark II** | 内置 K-1 / K-1 Mark II 四季参数 | v2.4 新增；28 条记录 / 21 个基础矩阵与 K-1 逐字节相同，Y=I；`0x021B` 自动迁移 |
-| **PENTAX KF** | 内置 KF 四季参数 / 同机型 donor | KF 文件通常已自带四季；也可作为 K-70 的 donor |
-| **PENTAX K-70** | 内置 KF 四季参数 | KF 与 K-70 共用同一套 21 个基础色彩矩阵，可精确补四季 |
-| **PENTAX K-30** | 内置 KF→K-30 四季参数 | K-30 无 0x021A/0x021B；工具新建标签并用其 ColorMatrix2 校准 |
-| **PENTAX K-01** | 内置 KF→K-30 / K-01 四季参数 | K-01 同样无表、大端；IFD 95 条，工具按实际布局重建 |
+| **PENTAX KF** | 内置 KF / K-70 四季参数 / 同机型 donor | KF 文件通常已自带四季；也可作为 K-70 的 donor |
+| **PENTAX K-70** | 内置 KF / K-70 四季参数 | KF 与 K-70 共用同一套 21 个基础色彩矩阵，可精确补四季 |
+| **PENTAX K-30** | 内置 K-30 系列四季参数 | K-30 无 0x021A/0x021B；工具新建标签并用其 ColorMatrix2 校准 |
+| **PENTAX K-01** | 内置 K-30 系列四季参数 | K-01 同样无表、大端；IFD 95 条，工具按实际布局重建 |
 | **PENTAX K-3** | 内置 KF 四季参数 + 自动校准 | 与 K-3 II / K-5 II / K-5 II s 共用同一张基准矩阵，校准后精确 |
 | **PENTAX K-3 II** | 内置 KF 四季参数 + 自动校准 | 矩阵表与 K-3 只差第 2 号一格，自动校准结果与 K-3 完全相同 |
 | **PENTAX K-5 II / K-5 II s** | 内置 KF 四季参数 + 自动校准 | 私有块是**大端**、25 条记录 / 18 个矩阵；两台矩阵表逐字节相同 |
@@ -258,9 +300,9 @@ KP      3BF7F56E17F2CDB83847E9C236B32F28F79E3A2CBC3C05330B83810601A91E22
 | **PENTAX 645D** | 内置 645D 四季参数 | v2.2 新增；11 参数表自动重建为 12 参数，四季矩阵按机身校准 |
 | **PENTAX KP** | 内置 KF 四季参数 + 自动校准 | v2.0 新增；有 `0x021B`，按机身校准 |
 | **PENTAX K-S2** | 内置 KF 四季参数 + 自动校准 | v2.0 新增；有 `0x021B`，按机身校准 |
-| **PENTAX K-50** | 内置 KF→K-50 四季参数 | v2.0 新增；无表、大端；Y 由 ColorMatrix2 推算 |
-| **PENTAX Q7** | 内置 KF→Q7 四季参数 | v2.0 新增；无表、小端；Y 由 ColorMatrix2 推算 |
-| **PENTAX MX-1** | 内置 KF→MX-1 四季参数 | v2.3 新增；无表、小端；82 条 IFD，只搬 `0x0222`；Y 由 ColorMatrix2 推算 |
+| **PENTAX K-50** | 内置 K-30 系列四季参数 | v2.0 新增；无表、大端；Y 由 ColorMatrix2 推算 |
+| **PENTAX Q7** | 内置 K-30 系列四季参数 | v2.0 新增；无表、小端；Y 由 ColorMatrix2 推算 |
+| **PENTAX MX-1** | 内置 K-30 系列四季参数 | v2.3 新增；无表、小端；82 条 IFD，只搬 `0x0222`；Y 由 ColorMatrix2 推算 |
 
 KF / K-70 的四季记录来自同一套模式表，矩阵也按同一套基础色彩矩阵校准；
 v1.4 起内置 KF 数据，K-70 不需要再准备 donor DNG，也不需要勾选“跨机型”复选框。
@@ -304,29 +346,21 @@ v1.9 起还支持 **DCU 5 另存的 DNG**：它们的 Pentax MakerNote 在 EXIF 
 
 ## 使用步骤
 
-1. 点“添加文件...”选择一个或多个 `.DNG` 文件（相机 DNG 和 DCU 另存的 DNG 都可以）；
-2. 选择“季节参数来源”：
-   - **内置 K-1 / K-1 Mark II 四季参数**：适用于 `PENTAX K-1`、`PENTAX K-1 Mark II`；
-   - **内置 KF 四季参数**：适用于 `PENTAX KF / K-70`，以及
-     `K-3 / K-3 II / K-5 II / K-5 II s / 645Z / KP / K-S2`（后七台会自动按机身校准）；
-   - **内置 645D 四季参数**：适用于 `PENTAX 645D`；工具会把 0x021A 重建成
-     12 参数 / 26 B 布局（PDCU 只在 12 参数布局下列出四季）；
-   - **内置 KF→K-30 / K-01 / K-50 / Q7 / MX-1 四季参数**：适用于
-     `PENTAX K-30 / K-01 / K-50 / Q7 / MX-1`；
-   - **同机型 DNG 作为 donor**：选择一张带四季参数的同机型 DNG；
-   - **允许其他跨机型 donor**：目标有 `0x021B` 时仍会按机身校准；
-     只有风格表与 donor 不一致的未知机型才会写近似值。
+1. 点“添加文件…”选择一个或多个 `.DNG` 文件（相机 DNG 和 DCU 另存的 DNG 都可以）；
+2. 选择「季节参数来源」（四个内置选项，添加文件后自动识别机型）：
+   - **内置 K-1 / K-1 Mark II**：适用于 `PENTAX K-1`、`PENTAX K-1 Mark II`；
+   - **内置 KF / K-70**：适用于 `PENTAX KF / K-70`，以及
+     `K-3 / K-3 II / K-5 II / K-5 II s / 645Z / KP / K-S2`；
+   - **内置 645D**：适用于 `PENTAX 645D`；
+   - **内置 K-30 系列**：适用于 `PENTAX K-30 / K-01 / K-50 / Q7 / MX-1`；
+   - **高级**：选择一张 DNG 作为来源；其他机型可勾选「允许使用其他机型的 DNG」。
 3. 选择输出位置：
    - 默认与源文件同目录，文件名加 `_all`；
    - 也可以指定输出目录；
 4. 点“开始转换”，完成后点“打开输出目录”。
 
-添加文件后，工具会自动读取机型并切换内置来源：K-1 / K-1 Mark II → 内置 K-1 /
-K-1 Mark II（K-1 Mark II 自动用 `k1ii` 数据）；KF / K-70 →
-内置 KF；645D → 内置 645D（并重建记录布局）；K-30 / K-01 / K-50 / Q7 / MX-1 →
-内置 KF→K-30 / K-01（按机型挑数据）；
-K-3 / K-3 II / K-5 II / K-5 II s / 645Z / KP / K-S2 → 内置 KF + 自动校准
-（日志会打印 `Y` 与风格一致性）；其他机型会在状态栏提示选择 donor。
+添加文件后，工具会自动读取机型并选中对应来源；K-1 Mark II 自动使用 `k1ii` 数据，
+K-3 / K-5 / 645Z / KP / K-S2 使用 KF 数据并按机身自动适配。
 
 日志里的 `按目标机身校准：Y = … style: median 8.2e-05 …` 就是这次校准：
 `median` 越小说明两台机身的风格表越一致；超过 3×10⁻³ 会提示“风格表不一致”。
