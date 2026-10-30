@@ -1,4 +1,4 @@
-# PDCU 四季参数补齐工具（GUI 版）v2.4
+# PDCU MOD 工具
 ![image](PDCU_Mod_Preview.png)
 ![image](PDCU-GUI.png)
 
