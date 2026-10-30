@@ -453,6 +453,8 @@ class App(tk.Tk):
         self.worker: threading.Thread | None = None
         self.last_out_dir: str | None = None
         self._model_cache: dict[str, str] = {}
+        self._detect_pending: set[str] = set()
+        self._detect_errors: dict[str, str] = {}
         self._logo = None
         self.custom_donor: str = ""
         self._last_builtin: str = "builtin"
@@ -537,13 +539,15 @@ class App(tk.Tk):
         self._out_mode_changed()
 
         # Allow "drag a DNG onto the exe" / passing files on the command line.
+        added = []
         for arg in sys.argv[1:]:
             if arg.lower().endswith(".dng") and os.path.isfile(arg):
-                self._append_target(os.path.abspath(arg))
+                if self._append_target(os.path.abspath(arg)):
+                    added.append(os.path.abspath(arg))
         self._refresh_file_state()
         if self.targets:
             self.status_var.set("已选择 %d 个文件" % len(self.targets))
-        self._autoselect_donor()
+        self._request_model_detection(added)
 
         ico = resource_path("season.ico")
         if os.path.exists(ico):
@@ -775,22 +779,22 @@ class App(tk.Tk):
         self.log.tag_configure("ts", foreground="#5f7183")
 
     # ---------- file list ----------
-    def _append_target(self, path: str) -> None:
+    def _append_target(self, path: str) -> bool:
         path = os.path.abspath(path)
         if path in self.targets:
-            return
+            return False
         self.targets.append(path)
         self.listbox.insert("end", path)
+        return True
 
     def _add_files(self) -> None:
         paths = filedialog.askopenfilenames(
             parent=self, title="选择 DNG 文件",
             filetypes=[("DNG 文件", "*.DNG *.dng"), ("所有文件", "*.*")])
-        for path in paths:
-            self._append_target(path)
+        added = [path for path in paths if self._append_target(path)]
         self._refresh_file_state()
         self.status_var.set("已选择 %d 个文件" % len(self.targets))
-        self._autoselect_donor()
+        self._request_model_detection(added)
 
     def _remove_selected(self) -> None:
         for index in reversed(self.listbox.curselection()):
@@ -798,7 +802,7 @@ class App(tk.Tk):
             del self.targets[index]
         self._refresh_file_state()
         self.status_var.set("已选择 %d 个文件" % len(self.targets))
-        self._autoselect_donor()
+        self._request_model_detection(self.targets)
 
     def _clear_files(self) -> None:
         self.listbox.delete(0, "end")
@@ -817,19 +821,56 @@ class App(tk.Tk):
             self.empty_hint.place(relx=0.5, rely=0.5, anchor="center")
             self.empty_hint.lift()
 
-    def _model_of(self, path: str) -> str:
-        if path not in self._model_cache:
-            try:
-                self._model_cache[path] = (core.Dng(path).model or "").strip()
-            except Exception:
-                self._model_cache[path] = ""
-        return self._model_cache[path]
+    @staticmethod
+    def _read_model(path: str) -> str:
+        return (core.Dng(path).model or "").strip()
+
+    def _request_model_detection(self, paths) -> None:
+        """Parse unknown models on a background thread, not on the Tk thread."""
+        pending = []
+        for path in paths:
+            path = os.path.abspath(path)
+            if path in self._model_cache or path in self._detect_pending:
+                continue
+            pending.append(path)
+        if not pending:
+            self._autoselect_donor()
+            return
+        self._detect_pending.update(pending)
+        for path in pending:
+            self._detect_errors.pop(path, None)
+        self.status_var.set("正在识别机型…")
+        threading.Thread(target=self._detect_models, args=(pending,),
+                         daemon=True).start()
+
+    def _detect_models(self, paths) -> None:
+        """Background model reader; results go through self.queue only."""
+        try:
+            for path in paths:
+                try:
+                    model = self._read_model(path)
+                    error = "" if model else "未读取到机型"
+                except Exception as exc:
+                    model, error = "", str(exc)
+                self.queue.put(("model", path, model, error))
+        finally:
+            self.queue.put(("detect_done",))
+
+    def _finish_detection(self) -> None:
+        if not self.targets:
+            return
+        self._autoselect_donor()
+        failed = [p for p in self.targets if p in self._detect_errors]
+        if failed:
+            self.status_var.set("%d 个文件无法识别机型，其余文件可继续" % len(failed))
 
     def _autoselect_donor(self) -> None:
         """Pick the built-in donor that matches the selected target models."""
         if not self.targets:
             return
-        models = {self._model_of(p) for p in self.targets}
+        if any(path not in self._model_cache for path in self.targets):
+            return
+        models = {self._model_cache[path] for path in self.targets}
         if "" in models:
             return
         if self.donor_mode.get() not in core.BUILTIN_SOURCES:
@@ -911,6 +952,10 @@ class App(tk.Tk):
         if not self.targets:
             show_alert(self, "提示", "请先添加至少一个 DNG 文件。", "warning")
             return
+        if any(path in self._detect_pending for path in self.targets):
+            show_alert(self, "正在识别机型",
+                       "机型识别在后台进行，请稍候再开始转换。", "info")
+            return
 
         donor_mode = self.donor_mode.get()
         donor_path = self.custom_donor
@@ -952,7 +997,7 @@ class App(tk.Tk):
         if donor_mode in core.BUILTIN_SOURCE_MODELS:
             rejected = []
             for target in self.targets:
-                model = self._model_of(target)
+                model = self._model_cache.get(target, "")
                 if not core.builtin_source_allows(donor_mode, model):
                     rejected.append((target, model or "无法识别"))
             if rejected:
@@ -1008,7 +1053,12 @@ class App(tk.Tk):
             out = output_for(target, out_dir)
             self.queue.put(("log", "[%d/%d] %s" % (i, len(targets), target)))
             try:
-                model = self._model_of(target)
+                model = self._model_cache.get(target)
+                if model is None:
+                    try:
+                        model = self._read_model(target)
+                    except Exception:
+                        model = ""
                 if source is not None:
                     kind = core.donor_kind_for_model(model)
                     if kind not in donors:
@@ -1091,6 +1141,17 @@ class App(tk.Tk):
                 kind = msg[0]
                 if kind == "log":
                     self._append_log(msg[1])
+                elif kind == "model":
+                    _kind, path, model, error = msg
+                    self._model_cache[path] = model
+                    self._detect_pending.discard(path)
+                    if error:
+                        self._detect_errors[path] = error
+                    else:
+                        self._detect_errors.pop(path, None)
+                elif kind == "detect_done":
+                    if not self._detect_pending:
+                        self._finish_detection()
                 elif kind == "progress":
                     self.progress.set(msg[1], msg[2])
                     self.status_var.set("正在转换 %d / %d" % (msg[1], msg[2]))
