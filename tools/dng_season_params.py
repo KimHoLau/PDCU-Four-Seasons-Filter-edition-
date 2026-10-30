@@ -103,6 +103,31 @@ COMPATIBLE_MODEL_PAIRS = {
 NO_TABLE_MODELS = {"PENTAX K-30", "PENTAX K-01", "PENTAX K-50",
                    "PENTAX Q7", "PENTAX MX-1"}
 
+# Which camera bodies each GUI source is allowed to handle.  The four built-in
+# sources are deliberately narrow: selecting the K-1 table for a K-70 must be
+# refused instead of silently producing a cross-model calibration.  The
+# "allow other bodies' DNG" opt-in applies only to the custom-DNG source.
+BUILTIN_SOURCE_MODELS = {
+    "builtin": frozenset(("PENTAX K-1", "PENTAX K-1 Mark II")),
+    "builtin_kf": frozenset((
+        "PENTAX KF", "PENTAX K-70",
+        "PENTAX K-3", "PENTAX K-3 II", "PENTAX K-5 II", "PENTAX K-5 II s",
+        "PENTAX 645Z", "PENTAX KP", "PENTAX K-S2",
+    )),
+    "builtin_645d": frozenset(("PENTAX 645D",)),
+    "builtin_k30": frozenset((
+        "PENTAX K-30", "PENTAX K-01", "PENTAX K-50",
+        "PENTAX Q7", "PENTAX MX-1",
+    )),
+}
+
+
+def builtin_source_allows(source, model):
+    """True when a built-in GUI source is allowed for this camera body."""
+    model = (model or "").strip()
+    allowed = BUILTIN_SOURCE_MODELS.get(source)
+    return bool(model and allowed and model in allowed)
+
 # KF / K-1 share this _PEF_MODEPRM_SET parameter id list.  It is only used
 # when a target has no 0x021A table yet; existing tables keep their own.
 DEFAULT_TABLE_PARAMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 128, 129]

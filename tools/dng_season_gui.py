@@ -771,15 +771,13 @@ class App(tk.Tk):
 
         self.donor_mode = tk.StringVar(value="builtin")
         rows = (
-            ("builtin", "内置 K-1 / K-1 Mark II", "原生四季数据"),
-            ("builtin_kf", "内置 KF / K-70",
-             "K-3 / K-3 II / K-5 II / K-5 II s / 645Z / KP / K-S2 自动适配"),
-            ("builtin_645d", "内置 645D", "PENTAX 645D 专用"),
-            ("builtin_k30", "内置 K-30 系列",
-             "K-30 / K-01 / K-50 / Q7 / MX-1"),
+            ("builtin", "内置 K-1 / K-1 Mark II"),
+            ("builtin_kf", "内置 KF / K-70"),
+            ("builtin_645d", "内置 645D"),
+            ("builtin_k30", "内置 K-30 系列"),
         )
-        for index, (value, title, subtitle) in enumerate(rows):
-            OptionRow(card.body, title, subtitle, value=value,
+        for index, (value, title) in enumerate(rows):
+            OptionRow(card.body, title, value=value,
                       variable=self.donor_mode,
                       command=self._donor_mode_changed
                       ).pack(fill="x", pady=(0 if index == 0 else 4, 0))
@@ -948,6 +946,7 @@ class App(tk.Tk):
             self.custom_donor = ""
             self.donor_name.configure(text="未选择", fg=TEXT_MUTE)
             self.donor_clear.pack_forget()
+            self.cross_check.set_enabled(False)
 
     @staticmethod
     def _shorten(text: str, limit: int = 30) -> str:
@@ -1026,7 +1025,27 @@ class App(tk.Tk):
                     "error")
                 return
 
-        allow_cross = bool(self.allow_cross_model.get())
+        # A built-in source is tied to the bodies it was calibrated for.  A
+        # mismatch is refused here, before any worker starts, so no output
+        # file can be produced.  The cross-model opt-in is only for a custom
+        # donor DNG.
+        if donor_mode in core.BUILTIN_SOURCE_MODELS:
+            rejected = []
+            for target in self.targets:
+                model = self._model_of(target)
+                if not core.builtin_source_allows(donor_mode, model):
+                    rejected.append((target, model or "无法识别"))
+            if rejected:
+                lines = ["所选内置来源不适用于以下机型：", ""]
+                for target, model in rejected[:8]:
+                    lines.append("%s（%s）" % (os.path.basename(target), model))
+                if len(rejected) > 8:
+                    lines.append("…")
+                lines += ["", "请选择匹配的内置来源，或在「高级」里使用自定义 DNG 来源。"]
+                show_alert(self, "来源不匹配", "\n".join(lines), "warning")
+                return
+
+        allow_cross = bool(self.allow_cross_model.get()) and donor_mode == "file"
 
         self.start_btn.set_enabled(False)
         self.open_btn.set_enabled(False)
