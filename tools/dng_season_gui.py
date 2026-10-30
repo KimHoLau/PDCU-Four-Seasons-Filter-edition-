@@ -487,6 +487,21 @@ class FileChooserDialog(tk.Toplevel):
         RoundButton(path_row, "上级", self._up, height=30, bg=BG
                     ).grid(row=0, column=2, padx=(8, 0))
 
+        quick = tk.Frame(body, bg=BG)
+        quick.pack(fill="x", pady=(0, 8))
+        RoundButton(quick, "此电脑", self._show_drives, height=26, padx=10,
+                    font=(FONT, 8), bg=BG).pack(side="left")
+        home = os.path.expanduser("~")
+        for label, folder in (("主目录", home),
+                              ("桌面", os.path.join(home, "Desktop")),
+                              ("下载", os.path.join(home, "Downloads")),
+                              ("图片", os.path.join(home, "Pictures"))):
+            if os.path.isdir(folder):
+                RoundButton(quick, label,
+                            lambda path=folder: self._load_dir(path),
+                            height=26, padx=10, font=(FONT, 8), bg=BG
+                            ).pack(side="left", padx=(6, 0))
+
         list_wrap = tk.Frame(body, bg=BG)
         list_wrap.pack(fill="both", expand=True)
         list_wrap.rowconfigure(0, weight=1)
@@ -517,8 +532,9 @@ class FileChooserDialog(tk.Toplevel):
         self.hint = tk.Label(foot, text="", bg=BG, fg=TEXT_MUTE,
                              font=(FONT, 8), anchor="w")
         self.hint.pack(side="left", fill="x", expand=True)
-        RoundButton(foot, "选择", self._accept, primary=True, height=32, bg=BG
-                    ).pack(side="right")
+        ok_text = "打开" if mode == "files" else "选择文件夹"
+        RoundButton(foot, ok_text, self._accept, primary=True, height=32,
+                    bg=BG).pack(side="right")
         RoundButton(foot, "取消", self._cancel, height=32, bg=BG
                     ).pack(side="right", padx=(0, 8))
 
@@ -577,6 +593,29 @@ class FileChooserDialog(tk.Toplevel):
         if not text:
             return ""
         return os.path.abspath(os.path.expanduser(os.path.expandvars(text)))
+
+    @staticmethod
+    def _drives():
+        try:
+            return list(os.listdrives())
+        except AttributeError:
+            return [drive for drive in
+                    ("%s:\\" % chr(code) for code in range(ord("C"), ord("Z") + 1))
+                    if os.path.isdir(drive)]
+
+    def _show_drives(self):
+        drives = self._drives()
+        if not drives:
+            self._error("没有可用的驱动器")
+            return
+        self._current = ""
+        self._entries = [(drive, drive, True) for drive in drives]
+        self.path_entry.delete(0, "end")
+        self.listbox.delete(0, "end")
+        for drive, _path, _is_dir in self._entries:
+            self.listbox.insert("end", drive)
+        self._clear_error()
+        self._update_hint()
 
     def _load_dir(self, path):
         path = self._normalize(path)
@@ -649,14 +688,18 @@ class FileChooserDialog(tk.Toplevel):
         self._error("路径不存在")
 
     def _update_hint(self):
+        if not self._current:
+            action = "打开" if self._mode == "files" else "选择文件夹"
+            self.hint.configure(text="选择驱动器后按「%s」进入" % action)
+            return
         if self._mode == "dir":
-            self.hint.configure(text="双击文件夹进入；不选则使用当前目录")
+            self.hint.configure(text="单击文件夹后按「选择文件夹」；双击也可进入")
             return
         count = len(self.listbox.curselection())
         if self._multiple and count:
             self.hint.configure(text="已选 %d 个文件" % count)
         else:
-            self.hint.configure(text="双击文件选择，双击文件夹进入")
+            self.hint.configure(text="单击文件夹后按「打开」进入；双击文件可直接选择")
 
     # ---------- selection ----------
     def _on_double(self, _event=None):
@@ -682,21 +725,28 @@ class FileChooserDialog(tk.Toplevel):
                     self._error("请选择文件夹")
                     return
                 self.result = path
-            else:
+            elif self._current:
                 self.result = self._current
+            else:
+                self._error("请选择驱动器或文件夹")
+                return
             self._close()
             return
-        selected = [self._entries[i] for i in self.listbox.curselection()
-                    if not self._entries[i][2]]
-        if not selected:
-            self._error("请选择 .DNG 文件")
+        picked = [self._entries[i] for i in self.listbox.curselection()]
+        files = [item for item in picked if not item[2]]
+        if files:
+            paths = [item[1] for item in files]
+            if self._multiple:
+                self.result = paths
+            else:
+                self.result = paths[0]
+            self._close()
             return
-        paths = [item[1] for item in selected]
-        if self._multiple:
-            self.result = paths
-        else:
-            self.result = paths[0]
-        self._close()
+        folders = [item for item in picked if item[2]]
+        if folders:
+            self._load_dir(folders[0][1])
+            return
+        self._error("请选择 .DNG 文件或文件夹")
 
 
 def ask_files(parent, title="选择 DNG 文件", initial=None):

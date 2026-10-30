@@ -145,8 +145,8 @@ FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.6.
 
 | 产物 | 大小 |
 |---|---:|
-| `dist/PDCU-Season-Params.exe` | 12,906,488 B |
-| `dist/PDCU-Season-ParamsV2.6.zip`（exe + 使用说明） | 12,661,149 B |
+| `dist/PDCU-Season-Params.exe` | 12,904,053 B |
+| `dist/PDCU-Season-ParamsV2.6.zip`（exe + 使用说明） | 12,658,095 B |
 
 打包后 exe 的 14 组机型自检全部通过，且与 v2.5 参考值逐字节相同；转换逻辑与
 输出文件均未改变：
@@ -174,8 +174,8 @@ FileDescription / ProductName **PDCU MOD**，FileVersion / ProductVersion **2.6.
 SHA-256：
 
 ```
-exe    A25F4A64802C56DDEF298F1354548A08404EB9A696742866E82E96065D842BEC
-zip    7DA4885ECBE2A1AFFA2803C2F0BC0BA543F3755D3D05C3DE110417AACF0610D0
+exe    B8C3C7E1D6D2328968FE86E95456EE8DFF05CAAD5DCA96187AE3A8AA2325D583
+zip    B93D7CB3D89810FD1AB45F9FF3BF428D6868505995F855BFC53D090EDDF0F494
 ```
 
 ### v2.5 打包记录（2026-10-30）
@@ -401,7 +401,9 @@ v1.9 起还支持 **DCU 5 另存的 DNG**：它们的 Pentax MakerNote 在 EXIF 
 ## 使用步骤
 
 1. 点“添加文件…”选择一个或多个 `.DNG` 文件（相机 DNG 和 DCU 另存的 DNG 都可以）；
-   文件、donor 与输出目录都用深色自绘选择器，支持路径输入、返回上级和取消；
+   文件、donor 与输出目录都用深色自绘选择器：单击文件夹后按「打开」进入，
+   也可用「此电脑」切换驱动器、用「主目录 / 桌面 / 下载 / 图片」快速定位；
+   支持路径输入、返回上级和取消；
 2. 选择「季节参数来源」（四个内置选项，添加文件后自动识别机型，面板只显示来源名称）：
    - **内置 K-1 / K-1 Mark II**：只适用于 `PENTAX K-1`、`PENTAX K-1 Mark II`；
    - **内置 KF / K-70**：只适用于 `PENTAX KF / K-70`，以及
