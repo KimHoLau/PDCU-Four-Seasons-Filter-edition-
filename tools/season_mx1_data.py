@@ -16,11 +16,11 @@ after the single preview JPEG (0xBBB6 / 0xBC3A in sample/MX1.dng).
 
 __copyright__ = "Copyright © 2026 KimHoLau X deepseek harness"
 
+from season_common import (BLOCK_SIZE, N_PARAMS, Q7_MX1_RECORDS, REC_SIZE,
+                           TABLE_PARAMS)
+
 MODEL = 'PENTAX MX-1'
 UNIQUE_MODEL = 'PENTAX MX-1'
-N_PARAMS = 12
-REC_SIZE = 26
-BLOCK_SIZE = 18
 BLOCK_COUNT = 4
 PRIV_ENDIAN = '<'
 
@@ -35,16 +35,9 @@ CM2 = (0.880447, -0.252304, -0.123764,
        -0.242310, 1.162735, 0.085953,
        -0.068161, 0.177353, 0.475311)
 
-TABLE_PARAMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 128, 129]
-
 # KF season records in the MX-1 byte order, with param 128 (the 0x021B
 # matrix index) renumbered to this bundle's 0..3.
-RECORDS = {
-    29: bytes.fromhex('1d00010002000300ffffffffffff00000000feff040000000000'),
-    30: bytes.fromhex('1e000100080004000100ffffffff00000300fdffffff01000000'),
-    31: bytes.fromhex('1f000100040001000100ffffffffffff0000ffffffff02000000'),
-    32: bytes.fromhex('20000100080004000100ffffffff0300fcff0400ffff03000000'),
-}
+RECORDS = Q7_MX1_RECORDS
 
 # M(KF season) * Y, quantised to Q13 in the MX-1's little-endian byte order.
 MATRICES = {

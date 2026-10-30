@@ -2,11 +2,10 @@
 
 __copyright__ = "Copyright © 2026 KimHoLau X deepseek harness"
 
+from season_common import BLOCK_SIZE, N_PARAMS, REC_SIZE
+
 MODEL = 'PENTAX K-1'
 UNIQUE_MODEL = 'PENTAX K-1'
-N_PARAMS = 12
-REC_SIZE = 26
-BLOCK_SIZE = 18
 BLOCK_COUNT = 27
 PRIV_ENDIAN = '<'
 

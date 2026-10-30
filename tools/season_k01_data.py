@@ -9,11 +9,11 @@ The K-01 ColorMatrix2 is read from sample/K01.DNG (K-01 Ver 1.05,
 
 __copyright__ = "Copyright © 2026 KimHoLau X deepseek harness"
 
+from season_common import (BLOCK_SIZE, K30_SERIES_RECORDS, N_PARAMS,
+                           REC_SIZE, TABLE_PARAMS)
+
 MODEL = 'PENTAX K-01'
 UNIQUE_MODEL = 'PENTAX K-01'
-N_PARAMS = 12
-REC_SIZE = 26
-BLOCK_SIZE = 18
 BLOCK_COUNT = 4
 PRIV_ENDIAN = '>'
 
@@ -22,14 +22,7 @@ PRIV_ENDIAN = '>'
 # stay on the K-3 calibration line to the last LSB.
 BASE_MATRIX = (12512, -4352, 32, -1728, 12832, -2912, 288, -3392, 11296)
 
-TABLE_PARAMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 128, 129]
-
-RECORDS = {
-    29: bytes.fromhex('001d000100020003ffffffffffff00000000fffe000400000000'),
-    30: bytes.fromhex('001e0001000800040001ffffffff00000003fffdffff00010000'),
-    31: bytes.fromhex('001f0001000400010001ffffffffffff0000ffffffff00020000'),
-    32: bytes.fromhex('00200001000800040001ffffffff0003fffc0004ffff00030000'),
-}
+RECORDS = K30_SERIES_RECORDS
 
 MATRICES = {
     0: bytes.fromhex('346ff675f51cf32b40eaebebf74d084a2069'),

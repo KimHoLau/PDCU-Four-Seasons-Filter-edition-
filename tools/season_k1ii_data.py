@@ -22,18 +22,14 @@ __copyright__ = "Copyright © 2026 KimHoLau X deepseek harness"
 # exact same bytes for all 28 modes and all 21 base matrices.
 from season_k1_data import (  # noqa: F401
     BLOCK_COUNT,
-    BLOCK_SIZE,
     MATRICES,
-    N_PARAMS,
     PRIV_ENDIAN,
-    REC_SIZE,
     RECORDS,
 )
+from season_common import BLOCK_SIZE, N_PARAMS, REC_SIZE, TABLE_PARAMS
 
 MODEL = 'PENTAX K-1 Mark II'
 UNIQUE_MODEL = 'PENTAX K-1 Mark II'
-
-TABLE_PARAMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 128, 129]
 
 # Mode-0 colour matrix of the K-1 Mark II (9 x Q13 ints).  It is byte-identical
 # to the K-1's, so the bundled season matrices need no run-time recalibration.

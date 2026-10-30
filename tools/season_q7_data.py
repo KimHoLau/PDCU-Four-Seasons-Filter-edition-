@@ -9,11 +9,11 @@ Pentax season data for the Q7."""
 
 __copyright__ = "Copyright © 2026 KimHoLau X deepseek harness"
 
+from season_common import (BLOCK_SIZE, N_PARAMS, Q7_MX1_RECORDS, REC_SIZE,
+                           TABLE_PARAMS)
+
 MODEL = 'PENTAX Q7'
 UNIQUE_MODEL = 'PENTAX Q7'
-N_PARAMS = 12
-REC_SIZE = 26
-BLOCK_SIZE = 18
 BLOCK_COUNT = 4
 PRIV_ENDIAN = '<'
 
@@ -22,14 +22,7 @@ PRIV_ENDIAN = '<'
 # as a donor.
 BASE_MATRIX = (11268, -856, -2220, -2319, 14321, -3810, -79, -4295, 12565)
 
-TABLE_PARAMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 128, 129]
-
-RECORDS = {
-    29: bytes.fromhex('1d00010002000300ffffffffffff00000000feff040000000000'),
-    30: bytes.fromhex('1e000100080004000100ffffffff00000300fdffffff01000000'),
-    31: bytes.fromhex('1f000100040001000100ffffffffffff0000ffffffff02000000'),
-    32: bytes.fromhex('20000100080004000100ffffffff0300fcff0400ffff03000000'),
-}
+RECORDS = Q7_MX1_RECORDS
 
 MATRICES = {
     0: bytes.fromhex('242fe506f7e9f9f05147b6e719f64205a524'),

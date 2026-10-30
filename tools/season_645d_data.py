@@ -21,11 +21,10 @@ render identically for the existing modes.
 
 __copyright__ = "Copyright © 2026 KimHoLau X deepseek harness"
 
+from season_common import BLOCK_SIZE, N_PARAMS, REC_SIZE, TABLE_PARAMS
+
 MODEL = 'PENTAX 645D'
 UNIQUE_MODEL = 'PENTAX 645D'
-N_PARAMS = 12
-REC_SIZE = 26
-BLOCK_SIZE = 18
 BLOCK_COUNT = 4
 PRIV_ENDIAN = '>'
 
@@ -40,8 +39,6 @@ BASE_MATRIX = (12556, -4344, -20, -1407, 11584, -1985, 326, -5836, 13702)
 CM2 = (0.954895, -0.264297, -0.140045,
        -0.504913, 1.390701, 0.116577,
        -0.183914, 0.385498, 0.573364)
-
-TABLE_PARAMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 128, 129]
 
 # KF season records in the 645D byte order, with param 128 (the 0x021B
 # matrix index) renumbered to this bundle's 0..3.
