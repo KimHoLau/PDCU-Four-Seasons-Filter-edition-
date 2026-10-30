@@ -1,5 +1,6 @@
 # PDCU 四季参数补齐工具（GUI 版）v2.4
-![image](PDCU-GUI.jpg)
+![image](PDCU_Mod_Preview.png)
+![image](PDCU-GUI.png)
 
 ## PDCU4季滤镜-色彩雷达图
 ![image](4Season-Color-Radar.png)
