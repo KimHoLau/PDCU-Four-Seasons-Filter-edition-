@@ -41,6 +41,7 @@
 [`docs/PDCU-九机型四季实测.md`](docs/PDCU-九机型四季实测.md)。
 
 ## 工具对照判定（2026-10-29）
+![image](docs/PDCU-KYUSHU-四季对比.jpg)
 同一张 K-1 场景，比较本工具与3年前开发的 `pentax_seasons`工具 产出的四季 DNG/JPG：
 本工具的 DNG 里 KYUSHU 矩阵与 K-1 机内 **逐字节相同**（相对风格残差 0），
 `pentax_seasons` 工具的文件只有四季的影调记录、矩阵索引全部越界（KYUSHU 指向 #24，
