@@ -2,7 +2,6 @@
 
 PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HARUBENI、夏至KATEN、九秋KYUSHU、冬日FUYUNO)
 
-![image](PDCU_Mod_Preview.png)
 ![image](PDCU-GUI.png)
 
 ## 四季滤镜-色彩雷达图
