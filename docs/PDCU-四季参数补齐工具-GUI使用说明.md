@@ -25,6 +25,8 @@ Windows 文件属性里的 `FileDescription` / `ProductName` 仍是 **PDCU MOD**
 ## 使用步骤
 
 1. 点「添加文件…」选择一个或多个 `.DNG` 文件；
+   文件、donor 和输出目录都使用与主窗口一致的深色自绘选择器，可输入路径、
+   返回上级或取消；取消不会改变原来的选择，中文 / 空格 / 长路径均可使用。
 2. 选择「季节参数来源」（面板只显示来源名称）：
    - 内置 K-1 / K-1 Mark II：只适用于 PENTAX K-1、K-1 Mark II
    - 内置 KF / K-70：只适用于 PENTAX KF、K-70，以及 K-3、K-3 II、K-5 II、

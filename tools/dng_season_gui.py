@@ -20,7 +20,7 @@ from pathlib import Path
 
 import tkinter as tk
 import tkinter.font as tkfont
-from tkinter import filedialog, ttk
+from tkinter import ttk
 
 import dng_season_params as core
 
@@ -440,6 +440,284 @@ def show_confirm(parent, title, message, ok="确定", cancel="取消") -> bool:
     return bool(dlg.result)
 
 
+class FileChooserDialog(tk.Toplevel):
+    """Dark self-drawn file/directory chooser."""
+
+    def __init__(self, parent, title, *, mode="files", multiple=False,
+                 initial=None):
+        super().__init__(parent, bg=BG)
+        self.withdraw()
+        self.overrideredirect(True)
+        self.configure(highlightthickness=1, highlightbackground="#3a3a3a")
+        self.result = None
+        self._mode = mode
+        self._multiple = bool(multiple and mode == "files")
+        self._entries = []
+        self._current = ""
+        self._drag = (0, 0)
+
+        head = tk.Frame(self, bg=PANEL)
+        head.pack(fill="x")
+        tk.Frame(head, bg=ACCENT, width=3).pack(side="left", fill="y")
+        title_label = tk.Label(head, text=title, bg=PANEL, fg=TEXT,
+                               font=(FONT, 10, "bold"))
+        title_label.pack(side="left", padx=14, pady=10)
+        close = tk.Label(head, text="×", bg=PANEL, fg=TEXT_MUTE,
+                         font=(FONT, 12), cursor="hand2")
+        close.pack(side="right", padx=14)
+        close.bind("<Button-1>", lambda _e: self._cancel())
+        for widget in (head, title_label):
+            widget.bind("<ButtonPress-1>", self._drag_start)
+            widget.bind("<B1-Motion>", self._drag_move)
+
+        body = tk.Frame(self, bg=BG)
+        body.pack(fill="both", expand=True, padx=16, pady=(12, 14))
+
+        tk.Label(body, text="路径", bg=BG, fg=TEXT_MUTE,
+                 font=(FONT, 8)).pack(anchor="w")
+        path_row = tk.Frame(body, bg=BG)
+        path_row.pack(fill="x", pady=(4, 10))
+        path_row.columnconfigure(0, weight=1)
+        self.path_entry = DarkEntry(path_row)
+        self.path_entry.grid(row=0, column=0, sticky="ew", ipady=5)
+        self.path_entry.bind("<Return>", lambda _e: self._go())
+        RoundButton(path_row, "转到", self._go, height=30, bg=BG
+                    ).grid(row=0, column=1, padx=(8, 0))
+        RoundButton(path_row, "上级", self._up, height=30, bg=BG
+                    ).grid(row=0, column=2, padx=(8, 0))
+
+        list_wrap = tk.Frame(body, bg=BG)
+        list_wrap.pack(fill="both", expand=True)
+        list_wrap.rowconfigure(0, weight=1)
+        list_wrap.columnconfigure(0, weight=1)
+        self.listbox = tk.Listbox(
+            list_wrap, selectmode=(tk.EXTENDED if self._multiple else tk.BROWSE),
+            font=(FONT, 9), activestyle="none", exportselection=False,
+            bg=FIELD, fg="#d6d6d6", selectbackground="#1d3f66",
+            selectforeground="#ffffff", bd=0, relief="flat",
+            highlightthickness=1, highlightbackground=BORDER,
+            highlightcolor="#3a3a3a", selectborderwidth=0)
+        self.listbox.grid(row=0, column=0, sticky="nsew")
+        scroll = ttk.Scrollbar(list_wrap, orient="vertical",
+                               style="Dark.Vertical.TScrollbar",
+                               command=self.listbox.yview)
+        scroll.grid(row=0, column=1, sticky="ns")
+        self.listbox.configure(yscrollcommand=scroll.set)
+        self.listbox.bind("<Double-Button-1>", self._on_double)
+        self.listbox.bind("<Return>", self._on_double)
+        self.listbox.bind("<<ListboxSelect>>", lambda _e: self._update_hint())
+
+        self.error = tk.Label(body, text="", bg=BG, fg="#e05a5a",
+                              font=(FONT, 8), anchor="w")
+        self.error.pack(fill="x", pady=(6, 0))
+
+        foot = tk.Frame(body, bg=BG)
+        foot.pack(fill="x", pady=(8, 0))
+        self.hint = tk.Label(foot, text="", bg=BG, fg=TEXT_MUTE,
+                             font=(FONT, 8), anchor="w")
+        self.hint.pack(side="left", fill="x", expand=True)
+        RoundButton(foot, "选择", self._accept, primary=True, height=32, bg=BG
+                    ).pack(side="right")
+        RoundButton(foot, "取消", self._cancel, height=32, bg=BG
+                    ).pack(side="right", padx=(0, 8))
+
+        self.bind("<Escape>", lambda _e: self._cancel())
+        start = initial or os.getcwd()
+        if os.path.isfile(start):
+            start = os.path.dirname(start)
+        if not os.path.isdir(start):
+            start = os.getcwd()
+        self._load_dir(start)
+
+        self.transient(parent)
+        self.update_idletasks()
+        w, h = 780, 560
+        px, py = parent.winfo_rootx(), parent.winfo_rooty()
+        pw, ph = parent.winfo_width(), parent.winfo_height()
+        x = px + max(0, (pw - w) // 2)
+        y = py + max(0, (ph - h) // 3)
+        self.geometry("%dx%d+%d+%d" % (w, h, x, y))
+        self.deiconify()
+        self.lift()
+        self.focus_force()
+        self.grab_set()
+        self.after(20, self.path_entry.focus_set)
+
+    # ---------- window ----------
+    def _drag_start(self, event):
+        self._drag = (event.x_root - self.winfo_x(),
+                      event.y_root - self.winfo_y())
+
+    def _drag_move(self, event):
+        dx, dy = self._drag
+        self.geometry("+%d+%d" % (event.x_root - dx, event.y_root - dy))
+
+    def _close(self):
+        try:
+            self.grab_release()
+        except tk.TclError:
+            pass
+        self.destroy()
+
+    def _cancel(self):
+        self.result = None
+        self._close()
+
+    def _error(self, text):
+        self.error.configure(text=text)
+
+    def _clear_error(self):
+        self.error.configure(text="")
+
+    # ---------- navigation ----------
+    @staticmethod
+    def _normalize(text):
+        text = (text or "").strip().strip('"')
+        if not text:
+            return ""
+        return os.path.abspath(os.path.expanduser(os.path.expandvars(text)))
+
+    def _load_dir(self, path):
+        path = self._normalize(path)
+        if not path or not os.path.isdir(path):
+            self._error("目录不存在或不可访问")
+            return False
+        try:
+            items = []
+            with os.scandir(path) as entries:
+                for entry in entries:
+                    try:
+                        is_dir = entry.is_dir()
+                    except OSError:
+                        continue
+                    if is_dir:
+                        items.append((entry.name, entry.path, True))
+                    elif (self._mode != "dir"
+                          and entry.name.lower().endswith(".dng")):
+                        items.append((entry.name, entry.path, False))
+        except OSError as exc:
+            self._error("无法读取目录：%s" % exc)
+            return False
+        items.sort(key=lambda item: (not item[2], item[0].casefold()))
+        self._current = path
+        self._entries = items
+        self.path_entry.delete(0, "end")
+        self.path_entry.insert(0, path)
+        self.listbox.delete(0, "end")
+        for name, _full, is_dir in items:
+            self.listbox.insert("end", name + (os.sep if is_dir else ""))
+        self._clear_error()
+        self._update_hint()
+        return True
+
+    def _up(self):
+        parent = os.path.dirname(self._current.rstrip("\\/"))
+        if not parent or os.path.normcase(parent) == os.path.normcase(self._current):
+            return
+        self._load_dir(parent)
+
+    def _go(self):
+        path = self._normalize(self.path_entry.get())
+        if not path:
+            self._error("请输入路径")
+            return
+        if os.path.isdir(path):
+            self._load_dir(path)
+            return
+        if os.path.isfile(path):
+            if self._mode == "dir":
+                self._error("这里需要选择目录，不是文件")
+                return
+            if not path.lower().endswith(".dng"):
+                self._error("请选择 .DNG 文件")
+                return
+            parent = os.path.dirname(path)
+            if not self._load_dir(parent):
+                return
+            target = os.path.normcase(path)
+            for index, (_name, full, is_dir) in enumerate(self._entries):
+                if not is_dir and os.path.normcase(full) == target:
+                    self.listbox.selection_clear(0, "end")
+                    self.listbox.selection_set(index)
+                    self.listbox.activate(index)
+                    self.listbox.see(index)
+                    self._update_hint()
+                    return
+            self._error("文件不在这个目录中")
+            return
+        self._error("路径不存在")
+
+    def _update_hint(self):
+        if self._mode == "dir":
+            self.hint.configure(text="双击文件夹进入；不选则使用当前目录")
+            return
+        count = len(self.listbox.curselection())
+        if self._multiple and count:
+            self.hint.configure(text="已选 %d 个文件" % count)
+        else:
+            self.hint.configure(text="双击文件选择，双击文件夹进入")
+
+    # ---------- selection ----------
+    def _on_double(self, _event=None):
+        selected = self.listbox.curselection()
+        if not selected:
+            return
+        index = selected[0]
+        _name, path, is_dir = self._entries[index]
+        if is_dir:
+            self._load_dir(path)
+            return
+        self.listbox.selection_clear(0, "end")
+        self.listbox.selection_set(index)
+        self.listbox.activate(index)
+        self._accept()
+
+    def _accept(self):
+        if self._mode == "dir":
+            selected = self.listbox.curselection()
+            if selected:
+                _name, path, is_dir = self._entries[selected[0]]
+                if not is_dir:
+                    self._error("请选择文件夹")
+                    return
+                self.result = path
+            else:
+                self.result = self._current
+            self._close()
+            return
+        selected = [self._entries[i] for i in self.listbox.curselection()
+                    if not self._entries[i][2]]
+        if not selected:
+            self._error("请选择 .DNG 文件")
+            return
+        paths = [item[1] for item in selected]
+        if self._multiple:
+            self.result = paths
+        else:
+            self.result = paths[0]
+        self._close()
+
+
+def ask_files(parent, title="选择 DNG 文件", initial=None):
+    dialog = FileChooserDialog(parent, title, mode="files", multiple=True,
+                               initial=initial)
+    parent.wait_window(dialog)
+    return list(dialog.result or [])
+
+
+def ask_file(parent, title="选择 DNG 文件", initial=None):
+    dialog = FileChooserDialog(parent, title, mode="files", multiple=False,
+                               initial=initial)
+    parent.wait_window(dialog)
+    return dialog.result
+
+
+def ask_directory(parent, title="选择目录", initial=None):
+    dialog = FileChooserDialog(parent, title, mode="dir", initial=initial)
+    parent.wait_window(dialog)
+    return dialog.result
+
+
 class App(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
@@ -456,6 +734,7 @@ class App(tk.Tk):
         self._detect_pending: set[str] = set()
         self._detect_errors: dict[str, str] = {}
         self._logo = None
+        self._last_browse_dir = os.getcwd()
         self.custom_donor: str = ""
         self._last_builtin: str = "builtin"
 
@@ -788,9 +1067,9 @@ class App(tk.Tk):
         return True
 
     def _add_files(self) -> None:
-        paths = filedialog.askopenfilenames(
-            parent=self, title="选择 DNG 文件",
-            filetypes=[("DNG 文件", "*.DNG *.dng"), ("所有文件", "*.*")])
+        paths = ask_files(self, "选择 DNG 文件", self._last_browse_dir)
+        if paths:
+            self._last_browse_dir = os.path.dirname(os.path.abspath(paths[0]))
         added = [path for path in paths if self._append_target(path)]
         self._refresh_file_state()
         self.status_var.set("已选择 %d 个文件" % len(self.targets))
@@ -916,10 +1195,9 @@ class App(tk.Tk):
         return text[:limit - 1] + "…"
 
     def _browse_donor(self) -> None:
-        path = filedialog.askopenfilename(
-            parent=self, title="选择同机型 donor DNG",
-            filetypes=[("DNG 文件", "*.DNG *.dng"), ("所有文件", "*.*")])
+        path = ask_file(self, "选择同机型 donor DNG", self._last_browse_dir)
         if path:
+            self._last_browse_dir = os.path.dirname(os.path.abspath(path))
             self.custom_donor = os.path.abspath(path)
             self.donor_mode.set(core.CUSTOM_DONOR_MODE)
             self._donor_mode_changed()
@@ -937,8 +1215,10 @@ class App(tk.Tk):
         self.out_browse.set_enabled(enabled)
 
     def _browse_out(self) -> None:
-        path = filedialog.askdirectory(parent=self, title="选择输出目录")
+        initial = self.out_entry.get().strip() or self._last_browse_dir
+        path = ask_directory(self, "选择输出目录", initial)
         if path:
+            self._last_browse_dir = path
             self.out_entry.configure(state="normal")
             self.out_entry.delete(0, "end")
             self.out_entry.insert(0, os.path.abspath(path))
