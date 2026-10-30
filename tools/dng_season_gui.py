@@ -52,11 +52,12 @@ SELECT_BORDER = "#2c557f"
 LOG_BG = "#121212"
 
 SEASONS = (
-    ("春红", "HARUBENI", "#e2648c"),
-    ("夏至", "KATEN", "#4ea8ff"),
-    ("九秋", "KYUSHU", "#e0913c"),
-    ("冬日", "FUYUNO", "#a9c4d8"),
+    ("春红", "HARUBENI", "#e2648c", "spring.png"),
+    ("夏至", "KATEN", "#4ea8ff", "summer.png"),
+    ("九秋", "KYUSHU", "#e0913c", "autumn.png"),
+    ("冬日", "FUYUNO", "#a9c4d8", "winter.png"),
 )
+SEASON_ICON_SIZE = 24
 
 def resource_path(name: str) -> str:
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
@@ -734,6 +735,7 @@ class App(tk.Tk):
         self._detect_pending: set[str] = set()
         self._detect_errors: dict[str, str] = {}
         self._logo = None
+        self._season_icons = []
         self._last_browse_dir = os.getcwd()
         self.custom_donor: str = ""
         self._last_builtin: str = "builtin"
@@ -1018,25 +1020,51 @@ class App(tk.Tk):
         self.cross_check.pack(anchor="w", pady=(4, 0))
         self.cross_check.set_enabled(True)
 
+    def _load_season_icon(self, filename):
+        """Load and nearest-neighbour shrink one season PNG for Tk."""
+        try:
+            image = tk.PhotoImage(file=resource_path(
+                os.path.join("assets", filename)))
+            side = max(image.width(), image.height())
+            factor = max(1, round(side / SEASON_ICON_SIZE))
+            if factor > 1:
+                image = image.subsample(factor, factor)
+        except tk.TclError:
+            return None
+        self._season_icons.append(image)
+        return image
+
     def _build_season_card(self, parent) -> None:
         card = Card(parent, "", "四季色彩", "补齐后 PDCU 内可选")
         card.grid(row=1, column=0, sticky="ew", pady=(10, 0))
         grid = tk.Frame(card.body, bg=PANEL)
         grid.pack(fill="x")
-        for index, (cn, en, color) in enumerate(SEASONS):
+        for index, (cn, en, color, icon_name) in enumerate(SEASONS):
             grid.columnconfigure(index, weight=1, uniform="season")
             cell = tk.Frame(grid, bg=PANEL)
             cell.grid(row=0, column=index, sticky="w")
             line = tk.Frame(cell, bg=PANEL)
             line.pack(anchor="w")
-            dot = tk.Canvas(line, width=8, height=8, bg=PANEL,
-                            highlightthickness=0)
-            dot.create_oval(0, 0, 7, 7, fill=color, outline="")
-            dot.pack(side="left", pady=(2, 0))
+            slot = tk.Frame(line, width=SEASON_ICON_SIZE,
+                            height=SEASON_ICON_SIZE, bg=PANEL)
+            slot.pack_propagate(False)
+            slot.pack(side="left")
+            icon = self._load_season_icon(icon_name)
+            if icon is not None:
+                tk.Label(slot, image=icon, bg=PANEL, bd=0,
+                         highlightthickness=0).place(relx=0.5, rely=0.5,
+                                                     anchor="center")
+            else:
+                dot = tk.Canvas(slot, width=SEASON_ICON_SIZE,
+                                height=SEASON_ICON_SIZE, bg=PANEL,
+                                highlightthickness=0)
+                dot.pack()
+                dot.create_oval(8, 8, 15, 15, fill=color, outline="")
             tk.Label(line, text=cn, bg=PANEL, fg="#d8d8d8",
-                     font=(FONT, 9)).pack(side="left", padx=(5, 0))
+                     font=(FONT, 9)).pack(side="left", padx=(6, 0))
             tk.Label(cell, text=en, bg=PANEL, fg=TEXT_MUTE,
-                     font=(MONO, 7)).pack(anchor="w", pady=(1, 0))
+                     font=(MONO, 7)).pack(anchor="w", padx=(30, 0),
+                                          pady=(1, 0))
 
     def _build_log(self) -> None:
         card = Card(self, "", "日志", "运行时输出")
