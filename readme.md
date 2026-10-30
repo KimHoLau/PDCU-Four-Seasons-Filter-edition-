@@ -5,28 +5,45 @@
 ## PDCU4季滤镜-色彩雷达图
 ![image](https://github.com/KimHoLau/PDCU-Four-Seasons-Filter-edition-/blob/main/4Season-Color-Radar.png)
 
-## 所有机型四季实测（2026-10-27）
-![image](docs/PDCU-九机型四季总览.png)
+## 1. 四季滤镜兼容机型及适配情况统计表
+| # | 机型 | 档 | 四季数据来源 | max\|ΔR\| | 验证 |
+|---:|---|---|---|---:|---|
+| 1 | **PENTAX KF** | S | 机内原生四季表（本项目基准） | 0 | donor 本体 |
+| 2 | **PENTAX K-70** | S | 内置 KF 表；21 个基础矩阵与 KF 逐字节相同，Y=I | 0 | 九机同场景 |
+| 3 | **PENTAX K-1** | S | 机内原生 K-1 四季表 | 7.3×10⁻⁵ | 九机同场景 |
+| 4 | **PENTAX K-1 Mark II** | S | 内置 K-1 原生四季表；28 条记录 / 21 个基础矩阵与 K-1 逐字节相同，Y=I | 7.3×10⁻⁵ | PDCU 菜单 + As Shot 零变化 + 同场景比值（v2.4） |
+| 5 | **PENTAX K-3** | A | KF×Y，Y 来自自身 0x021B | 5.7×10⁻⁵ | 九机同场景，CM2 pass |
+| 6 | **PENTAX K-3 II** | A | 同 K-3 的 Y | 5.7×10⁻⁵ | 九机同场景 |
+| 7 | **PENTAX K-5 II** | A | 基准与 K-3 逐字节相同，同一张表 | 6.0×10⁻⁵ | 矩阵/画面 ΔE；未 PDCU 实测 |
+| 8 | **PENTAX K-5 II s** | A | 同 K-5 II | 6.0×10⁻⁵ | 同 K-5 II |
+| 9 | **PENTAX KP** | A | KF×Y(KP) | 6.3×10⁻⁵ | 九机同场景，CM2 pass |
+| 10 | **PENTAX K-S2** | A | KF×Y(K-S2) | 4.3×10⁻⁵ | 九机同场景，CM2 警告 1.3×10⁻² |
+| 11 | **PENTAX 645Z** | A | KF×Y(645Z) | 4.4×10⁻⁵ | 九机同场景，CM2 警告 2.7×10⁻³ |
+| 12 | **PENTAX 645D** | A | KF×Y(645D)，Y 来自自身 0x021B；0x021A 重建为 12 参数 | 5.8×10⁻⁵ | PDCU 菜单 + 四季渲染实测（v2.2），CM2 pass 4.0×10⁻⁵ |
+| 13 | **PENTAX K-50** | B | ColorMatrix2 推算 Y | 5.7×10⁻⁵ | 九机同场景 + K-3 渲染对照 |
+| 14 | **PENTAX K-01** | B | ColorMatrix2 推算 Y | 5.5×10⁻⁵ | PDCU 渲染复核（舞狮），无同场景定量 |
+| 15 | **PENTAX K-30** | B | ColorMatrix2 推算 Y | 5.4×10⁻⁵ | PDCU 渲染复核（街景），无同场景定量 |
+| 16 | **PENTAX MX-1** | B | ColorMatrix2 推算 Y（1/1.7"） | 1.07×10⁻⁴ | PDCU 菜单 + 四季渲染 + 同场景比值 + As Shot 零变化（v2.3） |
+| 17 | **PENTAX Q7** | B | ColorMatrix2 推算 Y（小底） | 5.1×10⁻⁵ | 九机同场景，但 Y 不在单反校准线上 |
 
+> 表里的 max|ΔR| 是四季风格 R = M季节·inv(M基准) 与 KF 原生的最大差；Q13 一个 LSB
+> 是 1.22×10⁻⁴，所以**全部机型都在一个量化步长以内**。
+
+### S 档：原生或等价原生（4 台）
+
+### A 档：机身 0x021B 基准精确校准（8 台）
+这 8 台都有 `0x021B` 基准矩阵，工具运行时算 `Y = inv(M_KF[0])·M_body[0]`，
+再把 KF 四季矩阵乘上 Y。数学上就是 Pentax 生成各机身表的做法，所以是“精确解”。
+
+### B 档：ColorMatrix2 推算（5 台）
+这 5 台没有 `0x021A`/`0x021B`，Y 只能由 DNG 的 ColorMatrix2 反推：
+
+## 所有机型四季实测（2026-10-27）
 九台机身、同一场景、同一套 PDCU 5.10.2.2 渲染，仅切换“自定义影像”。
 每机型的四季效果图、矩阵残差、色卡 ΔE 与渲染一致性见
 [`docs/PDCU-九机型四季实测.md`](docs/PDCU-九机型四季实测.md)。
 
-645D 是另一代记录布局（11 参数 / 24 B），它的实测与结构分析见
-[`docs/PDCU-645D-KF四季移植.md`](docs/PDCU-645D-KF四季移植.md)。
-
-MX-1 是 1/1.7" 小底、没有 `0x021A` / `0x021B` 的机身（v2.3）。它的结构、
-ColorMatrix2 校准、PDCU 菜单与四季实测见
-[`docs/PDCU-MX1-KF四季移植.md`](docs/PDCU-MX1-KF四季移植.md)，
-效果图 [`docs/PDCU-MX1-四季效果.png`](docs/PDCU-MX1-四季效果.png)。
-
-K-1 Mark II 的 28 条模式记录、21 个基础矩阵与 K-1 **逐字节相同**（v2.4）。
-工具直接复用 K-1 原生四季表，Y=I，不需要按 ColorMatrix2 推算。结构、PDCU
-菜单与四季实测见 [`docs/PDCU-K1II-四季移植.md`](docs/PDCU-K1II-四季移植.md)，
-效果图 [`docs/PDCU-K1II-四季效果.png`](docs/PDCU-K1II-四季效果.png)。
-
 ## K-1 KYUSHU 四季文件对照判定（2026-10-29）
-
 同一张 K-1 场景，比较本工具与 `pentax_seasons`工具 产出的四季 DNG/JPG：
 本工具的 DNG 里 KYUSHU 矩阵与 K-1 机内 **逐字节相同**（相对风格残差 0），
 `pentax_seasons` 工具的文件只有四季的影调记录、矩阵索引全部越界（KYUSHU 指向 #24，
