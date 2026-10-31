@@ -4,9 +4,6 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
 
 ![image](PDCU-GUI.png)
 
-## 四季滤镜-色彩雷达图
-![image](4Season-Color-Radar.png)
-
 ## 系统架构
 ![PDCU MOD 系统架构](docs/PDCU-MOD-系统架构.png)
 
@@ -25,6 +22,9 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
   ProfileIfd / OpcodeList。
 - **下游与未知**：PDCU 兼容渲染器是否识别四季风格依赖下游实现；无法精确
   映射的字段标注“近似映射，待验证”。各机型的档位与残差见下方适配表。
+
+## 四季滤镜-色彩雷达图
+![image](4Season-Color-Radar.png)
 
 ## 四季滤镜-机型适配表（S档>A档>B档）
 | # | 机型 | 档 | 四季数据来源 | max\|ΔR\| | 验证 |
