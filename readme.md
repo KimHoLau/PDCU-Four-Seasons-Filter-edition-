@@ -7,6 +7,25 @@ PDCU 宾得相机DNG文件补齐四季色彩矩阵及曲线参数工具(春红HA
 ## 四季滤镜-色彩雷达图
 ![image](4Season-Color-Radar.png)
 
+## 系统架构
+![PDCU MOD 系统架构](docs/PDCU-MOD-系统架构.png)
+
+交互版：[docs/PDCU-MOD-系统架构.html](docs/PDCU-MOD-系统架构.html)（下载后用浏览器打开；可切换深/浅色，点击节点上的“来源”查看对应源码）
+
+- **主路径**：读取宾得 DNG 与机型 → 机身分级与校准 → MakerNote 写入
+  `0x021A` / `0x021B` → 输出 `_all` 副本与校准报告。
+- **四季配方库**：春红 HARUBENI、夏至 KATEN、九秋 KYUSHU、冬日 FUYUNO
+  四套并行条目；每套含 `0x021A` 季节记录与 `0x021B` 基准矩阵，以
+  PENTAX KF 机内原生表为基准。
+- **三档校准**：S 档原生或等价原生（Y=I）；A 档目标有 `0x021B`，按
+  `Y = inv(M_KF[0])·M_body[0]` 精确校准；B 档目标无 `0x021B`，Y 由
+  ColorMatrix2 推算，**不保证与官方固件一致**。
+- **写入边界**：只改 `0x021A` / `0x021B`，RAW 像素、BlackLevel、
+  WhiteLevel 只读；注入目标是宾得私有 MakerNote 字段，不是 DNG 标准的
+  ProfileIfd / OpcodeList。
+- **下游与未知**：PDCU 兼容渲染器是否识别四季风格依赖下游实现；无法精确
+  映射的字段标注“近似映射，待验证”。各机型的档位与残差见下方适配表。
+
 ## 四季滤镜-机型适配表（S档>A档>B档）
 | # | 机型 | 档 | 四季数据来源 | max\|ΔR\| | 验证 |
 |---:|---|---|---|---:|---|
